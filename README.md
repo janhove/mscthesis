@@ -6,7 +6,30 @@ See https://github.com/janhove/slicer for details about the `slicer` package.
 ## Scripts
 
 * `toy_example.R` generates the data for the toy example of Chapter 4,
-   computes the (sliced) Wasserstein distances, and fit the Gaussian process
-   models.
+  computes the (sliced) Wasserstein distances, and fit the Gaussian process
+  models.
 * `toy_example_figures.R` takes the output of `toy_example.R` and generates
-   the figures from Chapter 4.
+  the figures from Chapter 4.
+* `anisotropy_distances.R` generates the data for the examples in Section 5.5.2
+  and computes the distances.
+* `anisotropy_models.R` fits models using these distances and draws the figures
+  with the results.
+* `brains.R` runs the analyses for Section 5.6.
+
+## Data
+
+The data from Eckermann et al.'s (2021) study that are used for the examples
+in Section 5.6 are available as part of a 64.8 GB zipped directory
+from [zenodo](https://doi.org/10.5281/zenodo.5658994).
+I extracted the relevant Excel files from this directory and made them
+available here under `data/eckerman/`.
+
+
+
+## References
+Eckermann, Marina, Bernhard Schmitzer, Franziska van der Meer, 
+Jonas Franz, Ove Hansen, Christine Stadelmann & Tim Salditt. 
+2021. 
+Three-dimensional virtual histology of the human hippocampus based on 
+phase-contrast computed tomography. PNAS 118(48). e2113835118.
+[doi:10.1073/pnas.2113835118](https://doi.org/10.1073/pnas.2113835118).
