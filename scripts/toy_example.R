@@ -101,7 +101,7 @@ for (run in seq_len(runs)) {
   y_train <- all_data_list[[run]]$y_train
   y_test <- all_data_list[[run]]$y_test
   
-  # Compute moment-based representation ------------------------------------------
+  # Compute moment-based representation ----------------------------------------
   M <- matrix(0, nrow = N_train + N_test, ncol = 5)
   for (n in 1:(N_train + N_test)) {
     d <- current_data_list[[n]]
@@ -144,11 +144,11 @@ for (run in seq_len(runs)) {
   )
   results <- rbind(results, my_results) 
   
-  # Compute Wasserstein distances along cardinal axes ----------------------------
+  # Compute Wasserstein distances along cardinal axes --------------------------
   cardinal_distances <- compute_all_distances(
     current_data_list, diag(1, n_dim), verbose = FALSE)
   
-  # Wasserstein-based method: first axis -----------------------------------------
+  # Wasserstein-based method: first axis ---------------------------------------
   first_axis <- fit_gpr(cardinal_distances[[1]], training_idx, test_idx, 
     y_train, y_test, verbose = FALSE)
   first_axis_models[[run]] <- first_axis
@@ -161,7 +161,7 @@ for (run in seq_len(runs)) {
   )
   results <- rbind(results, my_results) 
   
-  # Wasserstein-based method: first axis -----------------------------------------
+  # Wasserstein-based method: first axis ---------------------------------------
   second_axis <- fit_gpr(cardinal_distances[[2]], training_idx, test_idx, 
     y_train, y_test, verbose = FALSE)
   second_axis_models[[run]] <- second_axis
@@ -174,7 +174,7 @@ for (run in seq_len(runs)) {
   )
   results <- rbind(results, my_results) 
   
-  # Sliced Wasserstein distances--------------------------------------------------
+  # Sliced Wasserstein distances------------------------------------------------
   thetas <- generate_directions(L = L, d = n_dim)
   data_list <- c(train_list, test_list)
   distances <- compute_all_distances(current_data_list, thetas, 
@@ -190,7 +190,7 @@ for (run in seq_len(runs)) {
   )
   results <- rbind(results, my_results) 
   
-  # Kernel learnt from cardinal axes. --------------------------------------------
+  # Kernel learnt from cardinal axes. ------------------------------------------
   cardinal_axes <- fit_gpr_multiple(cardinal_distances, training_idx, test_idx, 
     y_train, y_test)
   combined_models[[run]] <- cardinal_axes
@@ -266,7 +266,7 @@ for (run in seq_len(runs)) {
   y_train <- all_data_list[[run]]$y_train
   y_test <- all_data_list[[run]]$y_test
   
-  # Compute moment-based representation ------------------------------------------
+  # Compute moment-based representation ----------------------------------------
   M <- matrix(0, nrow = N_train + N_test, ncol = 5)
   for (n in 1:(N_train + N_test)) {
     d <- current_data_list[[n]]
@@ -309,11 +309,11 @@ for (run in seq_len(runs)) {
   )
   results <- rbind(results, my_results) 
   
-  # Compute Wasserstein distances along cardinal axes ----------------------------
+  # Compute Wasserstein distances along cardinal axes --------------------------
   cardinal_distances <- compute_all_distances(
     current_data_list, diag(1, 2), verbose = FALSE)
   
-  # Wasserstein-based method: first axis -----------------------------------------
+  # Wasserstein-based method: first axis ---------------------------------------
   first_axis <- fit_gpr(cardinal_distances[[1]], training_idx, test_idx, 
     y_train, y_test, verbose = FALSE)
   first_axis_models[[run]] <- first_axis
@@ -326,7 +326,7 @@ for (run in seq_len(runs)) {
   )
   results <- rbind(results, my_results) 
   
-  # Wasserstein-based method: first axis -----------------------------------------
+  # Wasserstein-based method: first axis ---------------------------------------
   second_axis <- fit_gpr(cardinal_distances[[2]], training_idx, test_idx, 
     y_train, y_test, verbose = FALSE)
   second_axis_models[[run]] <- second_axis
@@ -355,7 +355,7 @@ for (run in seq_len(runs)) {
   )
   results <- rbind(results, my_results) 
   
-  # Kernel learnt from cardinal axes. --------------------------------------------
+  # Kernel learnt from cardinal axes. ------------------------------------------
   cardinal_axes <- fit_gpr_multiple(cardinal_distances, training_idx, 
     test_idx, y_train, y_test)
   combined_models[[run]] <- cardinal_axes
@@ -384,7 +384,7 @@ if (shutdown) system("shutdown /s /t 1200 /f")
 
 # Software versions ------------------------------------------------------------
 devtools::session_info("attached")
-# ─ Session info ─────────────────────────────────────────────────────────────────────────────────
+# ─ Session info ───────────────────────────────────────────────────────────────
 # setting  value
 # version  R version 4.5.0 (2025-04-11 ucrt)
 # os       Windows 11 x64 (build 26200)
@@ -394,11 +394,11 @@ devtools::session_info("attached")
 # collate  English_United Kingdom.utf8
 # ctype    English_United Kingdom.utf8
 # tz       Europe/Zurich
-# date     2026-05-08
+# date     2026-05-11
 # rstudio  2023.06.1+524 Mountain Hydrangea (desktop)
 # (...)
 # 
-# ─ Packages ─────────────────────────────────────────────────────────────────────────────────────
+# ─ Packages ───────────────────────────────────────────────────────────────────
 # package      * version    date (UTC) lib source
 # dplyr        * 1.2.1      2026-04-03 [1] CRAN (R 4.5.3)
 # forcats      * 1.0.1      2025-09-25 [1] CRAN (R 4.5.3)
@@ -408,12 +408,11 @@ devtools::session_info("attached")
 # purrr        * 1.0.4      2025-02-05 [1] CRAN (R 4.5.0)
 # randomForest * 4.7-1.2    2024-09-22 [1] CRAN (R 4.5.2)
 # readr        * 2.2.0      2026-02-19 [1] CRAN (R 4.5.3)
-# slicer       * 0.0.0.9000 2026-05-08 [1] Github (janhove/slicer@2ccd8bf)
+# slicer       * 0.0.0.9000 2026-05-11 [1] Github (janhove/slicer@83f3f04)
 # stringr      * 1.6.0      2025-11-04 [1] CRAN (R 4.5.3)
 # tibble       * 3.2.1      2023-03-20 [1] CRAN (R 4.5.0)
 # tidyr        * 1.3.2      2025-12-19 [1] CRAN (R 4.5.3)
 # tidyverse    * 2.0.0      2023-02-22 [1] CRAN (R 4.5.3)
 # (...)
-
 # END --------------------------------------------------------------------------
 ################################################################################
