@@ -39,7 +39,8 @@ results45 |>
   theme_bw() +
   theme(axis.text = element_text(colour = "black"))
 
-ggsave(here("figures", "toy_example45_rmse.pdf"), width = 6, height = 3.8)
+ggsave(here("figures", "toy_example45_rmse.pdf"), width = 6, height = 3.8,
+       device = cairo_pdf)
 
 results45 |>
   group_by(run, method) |>
@@ -71,7 +72,8 @@ results90 |>
   theme_bw() +
   theme(axis.text = element_text(colour = "black"))
 
-ggsave(here("figures", "toy_example90_rmse.pdf"), width = 6, height = 3.8)
+ggsave(here("figures", "toy_example90_rmse.pdf"), width = 6, height = 3.8,
+       device = cairo_pdf)
 
 results90 |>
   group_by(run, method) |>
@@ -127,7 +129,8 @@ r2_results |>
   theme_bw() +
   theme(axis.text = element_text(colour = "black"))
 
-ggsave(here("figures", "toy_exampleR2.pdf"), width = 6, height = 5)
+ggsave(here("figures", "toy_exampleR2.pdf"), width = 6, height = 5,
+       device = cairo_pdf)
 
 r2_results |>
   group_by(method, scenario) |>
