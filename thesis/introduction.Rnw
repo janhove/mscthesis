@@ -239,7 +239,6 @@ that I use the terms \textit{distance} and \textit{metric} interchangeably.
     \item $d(x, z) \leq d(x, y) + d(y, z)$, that is, $d$ obeys the triangle inequality. \parend
   \end{enumerate}
 
-
 \section{Software and code availability}
 I carried out all computations in R \citep{R} and wrote my own functions
 for computing Wasserstein and sliced Wasserstein distances 
