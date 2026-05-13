@@ -1,5 +1,4 @@
 # Sliced Wasserstein distances and their application to regression problems
-
 My Master's thesis in Statistics and Data Science, including R scripts.
 See https://github.com/janhove/slicer for details about the `slicer` package.
 
@@ -13,7 +12,6 @@ They were created by Mark Dingsemanse and shared under a
 [CC BY-SA 3.0 license](https://creativecommons.org/licenses/by-sa/3.0/).
 
 ## Scripts
-
 * `toy_example.R` generates the data for the toy example of Chapter 4,
   computes the (sliced) Wasserstein distances, and fit the Gaussian process
   models.
@@ -26,7 +24,6 @@ They were created by Mark Dingsemanse and shared under a
 * `brains.R` runs the analyses for Section 5.6.
 
 ## Data
-
 The data from Eckermann et al.'s (2021) study that are used for the examples
 in Section 5.6 are available as part of a 64.8 GB zipped directory
 from [zenodo](https://doi.org/10.5281/zenodo.5658994).

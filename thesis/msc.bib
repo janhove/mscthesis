@@ -1,0 +1,54 @@
+@Article{CarpinteroPerez2024,
+  author   = {Raphaël {Carpintero Perez} and Sébastien {Da Veiga} and Josselin Garnier and Brian Staber},
+  journal  = {Proceedings of Machine Learning Research},
+  title    = {Gaussian process regression with sliced {W}asserstein-{W}eisfeiler-{L}ehman graph kernels},
+  year     = {2024},
+  pages    = {1297-1305},
+  volume   = {238},
+  abstract = {Supervised learning has recently garnered significant attention in the field of computational physics due to its ability to effectively extract complex patterns for tasks like solving partial differential equations, or predicting material properties. Traditionally, such datasets consist of inputs given as meshes with a large number of nodes representing the problem geometry (seen as graphs), and corresponding outputs obtained with a numerical solver. This means the supervised learning model must be able to handle large and sparse graphs with continuous node attributes. In this work, we focus on Gaussian process regression, for which we introduce the Sliced Wasserstein Weisfeiler-Lehman (SWWL) graph kernel. In contrast to existing graph kernels, the proposed SWWL kernel enjoys positive definiteness and a drastic complexity reduction, which makes it possible to process datasets that were previously impossible to handle. The new kernel is first validated on graph classification for molecular datasets, where the input graphs have a few tens of nodes. The efficiency of the SWWL kernel is then illustrated on graph regression in computational fluid dynamics and solid mechanics, where the input graphs are made up of tens of thousands of nodes.},
+}
+
+@Article{CarpinteroPerez2025,
+  author   = {Raphaël {Carpintero Perez} and Sébastien {Da Veiga} and Josselin Garnier and Brian Staber},
+  journal  = {Proceedings of Machine Learning Research},
+  title    = {Learning signals defined on graphs with optimal transport and {G}aussian process regression},
+  year     = {2025},
+  volume   = {258},
+  abstract = {In computational physics, machine learning has now emerged as a powerful complementary tool to explore efficiently candidate designs in engineering studies. Outputs in such supervised problems are signals defined on meshes, and a natural question is the extension of the general scalar output regression models to such complex outputs. Changes between input geometries in terms of both size and adjacency structure in particular make this transition non-trivial.  In this work, we propose an innovative strategy for Gaussian process regression where inputs are large and sparse graphs with continuous node attributes and outputs are signals defined on the nodes of the associated inputs. The methodology relies on the combination of regularized optimal transport, dimension reduction techniques, and the use of Gaussian processes indexed by graphs. In addition to enabling signal prediction, the main point of our proposal is to come with confidence intervals on node values, which is crucial for uncertainty quantification and active learning. Numerical expriments highlight the efficiency of the method to solve real problems in fluid dynamics and solid mechanics.},
+}
+
+@Article{Klein2024,
+  author  = {Nadja Klein},
+  journal = {Annual Review of Statistics and Its Application},
+  title   = {Distributional regression for data analysis},
+  year    = {2024},
+  pages   = {321-346},
+  volume  = {11},
+  doi     = {10.1146/annurev-statistics-040722-053607},
+}
+
+@Article{Poczos2013,
+  author  = {Barnabas Poczos and Aarti Singh and Alessandro Rinaldo and Larry Wasserman},
+  journal = {Proceedings of Machine Learning Research},
+  title   = {Distribution-free distribution regression},
+  year    = {2013},
+  pages   = {507-515},
+  volume  = {31},
+}
+
+@Manual{R,
+  title        = {R: A Language and Environment for Statistical Computing},
+  address      = {Vienna, Austria},
+  author       = {{R Core Team}},
+  organization = {R Foundation for Statistical Computing},
+  year         = {2025},
+  url          = {https://www.R-project.org/},
+}
+
+@Misc{Riesen2025,
+  author       = {Kaspar Riesen},
+  howpublished = {Lecture notes, University of Bern},
+  note         = {version 3.0},
+  title        = {Graph-based pattern recognition},
+  year         = {2025},
+}
