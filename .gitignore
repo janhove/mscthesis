@@ -1,4 +1,48 @@
+# R proj files
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+
+# knitr / LaTeX files
+# cache, figures
+*-concordance.tex
+*_cache/
+*_files/
+cache/
+figure/
+# intermediate files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.fmt
+*.glo
+*.gls
+*.glg
+*.idx
+*.ilg
+*.ind
+*.ist
+*.lof
+*.log
+*.lot
+*.maf
+*.mtc
+*.mtc0
+*.nav
+*.nlo
+*.out
+*.pdfsync
+*.pre
+*.run.xml
+*.snm
+*.synctex.gz
+*.synctex(busy)
+*.tdo
+*.tex
+*.toc
+*.vrb
+*.xdy
