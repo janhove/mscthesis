@@ -1,0 +1,250 @@
+\chapter{Introduction}
+This thesis is about methods for quantifying the similarity and dissimilarity
+between probability distributions 
+and about how these methods can be used to solve prediction problems 
+in statistics and machine learning.
+While my focus is on regression problems, 
+much of what I will discuss is relevant in classification settings, too.
+
+\section{Motivation and goal}
+The most widely used tools for solving classification and regression problems
+in statistics and machine learning are vector methods.
+In these methods, the input data are represented 
+as feature vectors $\vect x_1, \dots, \vect x_n \in \R^d$, 
+and the goal is to learn a function $\widehat f : \R^d \to \R$
+such that the outputs $y_1, \dots, y_n \in \R$ are well approximated by 
+$\widehat f(\vect x_i), i = 1, \dots, n$.
+Several important data types, however, 
+are not naturally expressed as Euclidean vectors.
+For instance, molecules, social networks, 
+and syntactic structures are more naturally expressed as graphs, 
+whereas a text containing $m$ words may be expressed as an $m \times d$
+matrix, the $i$-th row of which is a vector containing information
+about the $i$-th word in the text.
+
+If analysts want to nonetheless apply vector methods when dealing with
+such objects, they commonly resort to summarising 
+the information contained in these objects numerically 
+and combine these quantities into a feature vector.
+In the field of graph-based pattern recognition, for instance,
+vector representations of input graphs may be obtained
+by computing topological indices 
+(e.g., the sum of the lengths of the shortest paths between all node pairs) 
+or representations based on an eigendecomposition of the 
+adjacency matrices \citep[see][Chapter 5 for a concise overview of these techniques]{Riesen2025}.
+In analyses of text corpora, individual texts could be represented using 
+summaries such as the proportion of nouns that they contain or
+the mean frequency with which the words contained in them occur in a reference corpus.
+
+While convenient, such summaries inevitably discard 
+some of the information contained in the original objects. 
+A text represented by the mean word frequency of its constituent words loses 
+all information about the distribution of word frequencies within the text; 
+two texts with identical mean word frequencies 
+but entirely different distributional shapes will be treated as indistinguishable. 
+More generally, summarising an $m \times d$ matrix by a fixed-length feature vector 
+requires selecting a particular set of summary statistics, 
+and there is no guarantee that
+the statistics chosen capture the aspects of the distribution 
+most relevant to the downstream prediction task.
+
+An enticing alternative is to represent the input objects as probability distributions.\footnote{This approach is sometimes referred to as \term{distribution regression} \citep[e.g.,][]{Poczos2013},
+though the same term is also used when the outcomes rather than the inputs are distributions \citep[e.g.,][]{Klein2024}.}
+An example in the field of graph-based pattern recognition is provided by
+\citet{CarpinteroPerez2024,CarpinteroPerez2025}.
+Without getting into the weeds of graph representations, 
+which we will not need in what follows,
+these authors encode the input graphs as empirical distributions over 
+multivariate node embeddings.
+They then express the degree of dissimilarity between these input
+graphs using a metric on the space of (square-integrable) probability distributions,
+namely the sliced Wasserstein distance.
+This distance is subsequently put through a kernel function
+and fed to a Gaussian process regression model,
+allowing predictions for test data to be generated.
+(The terms `sliced Wasserstein distance', `kernel function' and `Gaussian process regression'
+will be defined precisely in the next chapters.)
+
+Motivated by Carpintero Perez et al.'s approach, 
+the present thesis studies the usefulness of combining sliced Wasserstein distances 
+with Gaussian process regression for regression problems 
+in which the inputs are represented as probability distributions. 
+More specifically, this thesis is built around two questions:\label{page:rqs}
+\begin{enumerate}
+  \item Can examples be identified in which the combination of 
+        sliced Wasserstein distances and Gaussian process regression substantially
+        outperforms natural alternative approaches even outside of the graph domain
+        covered by \citet{CarpinteroPerez2024,CarpinteroPerez2025}?
+        
+  \item Rescaling a single dimension can drastically alter pairwise 
+        sliced Wasserstein distances, making them scale-sensitive in a way 
+        that many vector-based methods are not.
+        How should analysts preprocess distributions to address this sensitivity, 
+        and can predictive accuracy be improved by deliberately rescaling informative dimensions?
+\end{enumerate}
+
+The first question addresses whether 
+there is a use case for the sliced Wasserstein--Gaussian processes
+workflow outside of the graph domain. (I was somewhat skeptical at the outset.)
+The second leads to what are, to my knowledge, 
+my main theoretical contributions as well as to a handful of practical consequences.
+
+\section{Outline and contributions}
+Chapter \ref{ch:wasserstein} introduces Wasserstein and sliced Wasserstein distances 
+as measures of dissimilarity between probability distributions. 
+It reviews their key theoretical properties and discusses computational aspects.
+Chapter \ref{ch:gpr} then presents the framework of Gaussian process regression 
+and shows how Wasserstein and sliced Wasserstein distances can be used in this framework.
+Since this is achieved by building kernels based on the computed distances,
+this chapter also introduces the notion of a kernel function.
+Together, Chapters \ref{ch:wasserstein} and \ref{ch:gpr} lay 
+the methodological foundation for the analyses that follow.
+
+In Chapter \ref{ch:toyexample}, a specially constructed example 
+is used to demonstrate that kernels based on sliced Wasserstein distances 
+can detect distributional differences that remain invisible to 
+conventional vector-based methods as well as to kernels 
+that are based only on marginal distributions.
+This chapter answers the first question outlined above in the affirmative.
+
+When going beyond such toy examples, though, 
+analysts seeking to use sliced Wasserstein distances to solve 
+real-life regression problems need to deal with a number of practical questions. 
+One such question is whether and how the input distributions 
+should be preprocessed before submitting them to the distance computations.
+Chapter \ref{ch:affine} therefore analyses how 
+global affine transformations, such as rescaling and whitening, 
+affect sliced Wasserstein distances and the kernels derived from them.
+To my knowledge, mine is the first such treatment.
+The theoretical results are illustrated by means of simulations.
+A real-data example further demonstrates how global affine transformations
+affect the downstream prediction task.
+Chapter \ref{ch:affine} suggests that rescaling informative dimensions
+can improve predictive accuracy up to a point.
+It also proves that sliced Wasserstein distances are invariant to
+certain preprocessing decisions such as the precise whitening technique that is used.
+
+Chapter \ref{ch:outlook} concludes by summarising the main findings
+and suggesting avenues for future work that may make for interesting 
+Master's thesis topics.
+
+\section{Notation and conventions}
+The space of probability distributions on $\R^d, d \geq 1,$ is denoted $\set P(\R^d)$.
+For $p \in [1, \infty)$, $\mathcal{P}_p(\R^d)$ represents the
+set of probability distributions on $\R^d$ with finite $p$-th moment.
+That is,
+\[
+  \set P_p(\R^d)
+  :=
+  \left\{\mu \in \set P(\R^d) : \int_{\R^d} \|x\|_p^p \df \mu(x) < \infty \right\},
+\]
+where
+\[
+  \|\vect x\|_p = \|(x_1, \dots, x_d)\T\|_p = \left(\sum_{i = 1}^d |x_i|^p\right)^{\frac{1}{p}}
+\]
+is the $p$-norm on $\R^d$.
+The $2$-norm on $\R^d$ corresponds to the usual Euclidean norm
+and may be written as $\|\cdot\|$, dropping the subscript $2$.
+
+For probability distributions 
+$\mu \in \mathcal{P}(\R^k), \nu \in \mathcal{P}(\R^{\ell}), k, \ell \geq 1$,
+we denote by $\Gamma(\mu, \nu)$ the set of \term{couplings} of $\mu$ and $\nu$.
+These are the probability distributions
+on $\R^k \times \R^{\ell}$ that have $\mu$ and $\nu$ as their marginals.
+That is, $\Gamma(\mu, \nu)$ is defined as
+\[
+  \left\{\gamma \in \mathcal{P}(\R^k \times \R^{\ell}) :
+  \gamma(A \times \R^{\ell}) = \mu(A), 
+  \gamma(\R^k \times B)      = \nu(B) \textrm{~for all~} A \in \mathcal{B}(\R^k), B \in \mathcal{B}(\R^{\ell})\right\},
+\]
+where $\mathcal{B}(\R^m)$ is the Borel $\sigma$-algebra on $\R^m$.
+Since the product measure $\mu \otimes \nu$ belongs to $\Gamma(\mu, \nu)$,
+the set $\Gamma(\mu, \nu)$ is not empty.
+If $\vect X \sim \mu, \vect Y \sim \nu$, then $(\vect X, \vect Y) \sim \mu \otimes \nu$ means that
+$\vect X$ and $\vect Y$ are (stochastically) independent.
+
+The Dirac measure that places all probability mass on $\vect x \in \R^d$
+is denoted $\delta_{\vect x}$.
+
+The unit sphere in $\R^d$ is
+\[
+  \Sphere^{d-1} := \{\vect \theta : \|\vect \theta\|_2 = 1\} \subset \R^d.
+\]
+The uniform distribution on $\Sphere^{d-1}$ is denoted as $\sigma$.
+
+For a measurable map $f : \R^k \to \R^{\ell}, k, \ell \geq 1$,
+we denote as $f_{\#} : \mathcal{P}(\R^k) \to \mathcal{P}(\R^{\ell})$
+the \term{push-forward operator} associated with $f$.
+For $\mu \in \mathcal{P}(\R^k)$, $f_{\#}\mu$ is a probability distribution
+on $\R^{\ell}$ characterised by
+\[
+  f_{\#}\mu(A) = \mu(f^{-1}(A))
+\]
+for any measurable set $A \subset \R^{\ell}$.
+Here,
+\[
+  f^{-1}(A) := \{\vect x \in \R^k : f(x) \in A\}.
+\]
+
+For $\vect u \in \R^d$,
+we define the map
+\begin{align*}
+   \vect u^{\star}:         \R^d  &\to      \R, \\
+  \vect x = (x_1, \dots, x_d)\T   &\mapsto  \langle \vect u, \vect x \rangle = \sum_{i=1}^d u_ix_i.
+\end{align*}
+The associated pushforward operator $(\vect u^{\star})_{\#}$
+is also written more compactly as $\vect u^{\star}_{\#}$.
+
+For a random variable $X \sim \mu$ on $\R$, its distribution function is the map
+\[
+  \R \ni t \mapsto F_{\mu}(t) := F_X(t) := \Prob(X \leq t),
+\]
+and its quantile function is defined by means of the generalised inverse
+of the distribution function as the map
+\[
+  (0, 1) \ni r \mapsto F_{\mu}^{-1}(r) := F_X^{-1}(r) := \inf\{t \in \R : F_X(t) \geq r\}.
+\]
+
+The $\ones_n$ symbol represents the vector $(1, \dots, 1) \in \R^n$
+and $\mat I_n$ represents the $n \times n$ identity matrix.
+
+Since the $\delta$ symbol is used to denote Dirac measures
+and I find the $\ones$ and $\mathbb{1}$ symbols too similar,
+I use the Iverson bracket to denote indicator functions.
+That is, for any proposition $P$,
+\[
+  [P] :=
+  \begin{cases}
+    1, & \textrm{if $P$ is true}, \\
+    0, & \textrm{otherwise}.
+  \end{cases}
+\]
+Thus, $[i = j]$ evaluates to $1$ if $i = j$ and to $0$ if $i \neq j$.
+
+A non-standard convention that I have found useful is to end
+numbered statements such as definitions and remarks with a $\diamondsuit$ symbol
+as opposed to putting the whole statement in italics.
+So, too, in the first definition in this thesis, which clarifies
+that I use the terms \textit{distance} and \textit{metric} interchangeably.
+
+\mypar[Distance]{Definition}\label{def:distance}
+  Let $\mathcal{X}$ be a non-empty set.
+  A function $d : \mathcal{X} \times \mathcal{X} \to \R$ is called
+  a \term{distance} (or a \term{metric}) on $\mathcal{X}$
+  if it satisfies all of the following axioms for arbitrary $x, y, z \in \mathcal{X}$:
+  \begin{enumerate}[label=(D\arabic*)]
+    \item $d(x, y) \geq 0$, that is, $d$ is non-negative;
+    \item $d(x, y) = 0$ if and only if $x = y$;
+    \item $d(x, y) = d(y, x)$, that is, $d$ is symmetric;
+    \item $d(x, z) \leq d(x, y) + d(y, z)$, that is, $d$ obeys the triangle inequality. \parend
+  \end{enumerate}
+
+
+\section{Software and code availability}
+I carried out all computations in R \citep{R} and wrote my own functions
+for computing Wasserstein and sliced Wasserstein distances 
+as well as for fitting Gaussian process regression models.
+I have put together these functions as an R package, \texttt{slicer},
+that is available from \url{https://janhove.github.io/slicer}.
+The R scripts used for the examples, as well as their inputs and outputs, are available alongside
+the source files for this thesis from \url{https://github.com/janhove/mscthesis}.
