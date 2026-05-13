@@ -1,0 +1,486 @@
+\chapter{Wasserstein and sliced Wasserstein distances}\label{ch:wasserstein}
+The Wasserstein distance is one of the most important and widely used distances 
+between probability distributions.
+This chapter reviews some key properties of this distance
+before turning its focus to its cousin, the sliced Wasserstein distance.
+Attention is restricted to probability distributions on $\R^d$ for $d \geq 1$.
+
+\section{Wasserstein distances}
+
+\subsection{Definition and key properties}
+The mathematical field of \term{optimal transport} studies
+the problem of finding a coupling $\gamma \in \Gamma(\mu, \nu)$
+between two probability distributions $\mu$ and $\nu$
+defined on metric spaces $\mathcal{X}$ and $\mathcal{Y}$, respectively,
+that minimises the quantity
+\[
+  \int_{\mathcal{X} \times \mathcal{Y}} c(x, y)\df \gamma(x, y),
+\]
+where $c : \mathcal{X} \times \mathcal{Y} \to [0, \infty)$ 
+is a non-negative measurable function (a `cost function').
+Such an optimal coupling is also called an optimal \term{transport plan}.
+If, under an optimal transport plan, it holds that 
+$\nu = T_{\#}\mu$ for some measurable map $T : \mathcal{X} \to \mathcal{Y}$,
+then $T$ is called an optimal \term{transport map}.
+
+Conceptually, the optimal transport plan represents the most efficient
+way (in terms of the cost function $c$) to move the probability mass
+of $\mu$ about so that it corresponds to that of distribution $\nu$.
+If we consider the special case where $\mu$ and $\nu$ are
+probability distributions on $\R^d, d \geq 1,$
+it is natural to base the cost function on a distance defined on $\R^d$.
+Of particular interest are cost functions of the form
+\[
+  c(\vect x, \vect y) = \|\vect x - \vect y\|_p^p,
+\]
+where $\|\cdot\|_p$ denotes the $p$-norm on $\R^d$ for $p \geq 1$.
+For our purposes, the focus is less on finding a minimiser $\gamma \in \Gamma(\mu, \nu)$
+than it is on computing or otherwise estimating the resulting minimum,
+which results in the Wasserstein distance between $\mu$ and $\nu$.
+
+\mypar[Wasserstein distance]{Definition}\label{def:wasserstein}
+  Let $\mu, \nu \in \mathcal{P}(\R^d), d \geq 1$ and $p \in [1, \infty)$.
+  The \term{Wasserstein distance} of order $p$ (also called the $p$-Wasserstein distance)
+  between $\mu$ and $\nu$ is defined as
+  \[
+    \W_p(\mu, \nu)
+    := \inf_{\gamma \in \Gamma(\mu, \nu)}
+    \left(\int_{\R^d \times \R^d} \|x - y\|_p^p \df \gamma(x, y)\right)^{\frac{1}{p}}.\parendeq
+  \]
+
+This definition can be recast in the following probabilistic terms:
+For $\mu, \nu \in \mathcal{P}(\R^d), d \geq 1$, we have
+\begin{equation}\label{eq:probabilisticwasserstein}
+    \W_p(\mu, \nu)
+    = \inf_{\substack{\vect X \sim \mu,\\ \vect Y \sim \nu}} \left(\E(\|\vect X - \vect Y\|_p^p)\right)^{\frac{1}{p}}
+\end{equation}
+for all $p \geq 1$.
+The infimum in Definition \ref{def:wasserstein} is a minimum in $[0, \infty)$
+provided that both $\mu$ and $\nu$ have finite $p$-th moments
+\citep[][Theorem 4.1 and Chapter 6]{Villani2009}.
+
+I will often abuse notation and write
+$\W_p(\vect X, \vect Y)$ in lieu of $\W_p(\mu, \nu)$ if $\vect X \sim \mu$ and $\vect Y \sim \nu$.
+Further, if $\mu = m^{-1} \sum_{i=1}^m \delta_{\vect x_i}$
+and $\nu = n^{-1} \sum_{j=1}^n \delta_{\vect y_j}$ are empirical distributions
+with $\vect x_1, \dots, \vect x_m$ and $\vect y_1, \dots, \vect y_n$ vectors in $\R^d$, 
+I will occasionally write $\W_p(\mat M_1, \mat M_2)$ instead of $\W_p(\mu, \nu)$,
+where
+\[
+  \mat M_1 = \begin{pmatrix} \vect x_1\T \\ \vdots \\ \vect x_m\T \end{pmatrix}
+  ~~~\textrm{and}~~~
+  \mat M_2 = \begin{pmatrix} \vect y_1\T \\ \vdots \\ \vect y_n\T \end{pmatrix}.
+\]
+
+The Wasserstein distance, 
+named for Leonid Vaseršteĭn in what seems to be a case of Stigler's law of eponymy,
+goes by a few different names,
+among which are the Mallows distance, the Kantorovich--Rubinstein metric,
+and the earth mover's distance (for $p = 1$).
+
+A few properties of the Wasserstein distance that I will use
+in the chapters to follow are presented in the next lemma.
+
+\mypar[Basic properties of $\W$]{Lemma}\label{lemma:wassersteinproperties}
+For $p \geq 1$ and $d \geq 1$, let $\vect X \sim \mu, \vect Y \sim \nu$ be random vectors,
+with $\mu, \nu \in \mathcal{P}_p(\R^d)$.
+Further let $\vect v \in \R^d$ and $c \in \R$.
+Then
+\begin{enumerate}
+  \item $\W_p(\vect X + \vect v, \vect Y + \vect v) = \W_p(\vect X, \vect Y)$, 
+  that is, Wasserstein distances are translation-invariant.
+  \item $\W_p(c \vect X, c \vect Y) = |c|\W_p(\vect X, \vect Y)$, 
+  that is, Wasserstein distances are homogeneous.
+\end{enumerate}
+
+For the special case $p = 2$, furthermore, the Wasserstein distance can be bounded from above:
+\begin{enumerate}\addtocounter{enumi}{2}
+  \item $\W_2^2(\vect X, \vect Y) \leq 2\E(\|\vect X\|^2) + 2\E(\|\vect Y\|^2)$. \parend
+\end{enumerate}
+
+\begin{proof}
+  From Equation \ref{eq:probabilisticwasserstein}, we obtain
+  \begin{align*}
+    \W_p(\vect X + \vect v, \vect Y + \vect v)
+    &= \inf_{\substack{\widetilde{\vect X} \sim \mathcal{L}(\vect X),\\ \widetilde{\vect Y}\sim \mathcal{L}(\vect Y)}} \left(\E(\|\widetilde{\vect X} + \vect v - (\widetilde{\vect Y} + \vect v)\|_p^p)\right)^{\frac{1}{p}} \\
+    &= \inf_{\substack{\widetilde{\vect X} \sim \mathcal{L}(\vect X),\\ \widetilde{\vect Y} \sim \mathcal{L}(\vect Y)}} \left(\E(\|\widetilde{\vect X} - \widetilde{\vect Y}\|_p^p)\right)^{\frac{1}{p}} \\
+    &= \W_p(\vect X, \vect Y).
+  \end{align*}
+
+  Similarly,
+  \begin{align*}
+    \W_p(c \vect X, c \vect Y)
+    = \inf_{\substack{\widetilde{\vect X} \sim \mathcal{L}(\vect X),\\ \widetilde{\vect Y} \sim \mathcal{L}(\vect Y)}} \left(\E(\|c \widetilde{\vect X} - c\widetilde{\vect Y}\|_p^p)\right)^{\frac{1}{p}}
+    = |c| \inf_{\substack{\widetilde{\vect X} \sim \mathcal{L}(\vect X),\\ \widetilde{\vect Y} \sim \mathcal{L}(\vect Y)}} \left(\E(\|\widetilde{\vect X} - \widetilde{\vect Y}\|_p^p)\right)^{\frac{1}{p}}
+    = |c|\W_p(\vect X, \vect Y).
+  \end{align*}
+  
+  Finally, for independent $\widetilde{\vect X} \sim \mathcal{L}(\vect X)$ and $\widetilde{\vect Y} \sim \mathcal{L}(\vect Y)$,
+  it holds that
+  \begin{align*}
+    \W_2^2(\vect X, \vect Y) 
+    \leq \E\left(\|\widetilde{\vect X} - \widetilde{\vect Y}\|^2\right)
+    = \E\left(\|\widetilde{\vect X}\|^2\right) + \E\left(\|\widetilde{\vect Y}\|^2\right) - 2\E(\langle \widetilde{\vect X}, \widetilde{\vect Y}\rangle).
+  \end{align*}
+  We find that
+  \begin{align*}
+    -2\E(\langle \widetilde{\vect X}, \widetilde{\vect Y}\rangle)
+    &= -2\langle \E(\widetilde{\vect X}), \E(\widetilde{\vect Y}) \rangle       & [\textrm{independence}]\\
+    &\leq 2|\langle \E(\widetilde{\vect X}), \E(\widetilde{\vect Y}) \rangle|   & \\
+    &\leq 2\|\E(\widetilde{\vect X})\|\|\E(\widetilde{\vect Y})\|               & [\textrm{Cauchy--Schwarz}] \\
+    &\leq \|\E(\widetilde{\vect X})\|^2 + \|\E(\widetilde{\vect Y})\|^2         & [a^2 + b^2 \geq 2ab] \\
+    &\leq \E(\|\widetilde{\vect X}\|^2) + \E(\|\widetilde{\vect Y}\|^2).        & [\textrm{Jensen}]
+  \end{align*}
+  Since $\vect X \eqd \widetilde{\vect X}, \vect Y \eqd \widetilde{\vect Y}$, it follows that
+  $\W_2^2(\vect X, \vect Y) \leq 2\E\left(\|\vect X\|^2\right) + 2\E\left(\|\vect Y\|^2\right)$.
+\end{proof}
+
+The $p$-Wasserstein distance is a distance on
+$\mathcal{P}_p(\R^d), d \geq 1, p \geq 1$, 
+in the sense of Definition \vref{def:distance}
+\citep[][Chapter 6]{Villani2009}.
+From a theoretical point of view, one of its attractive properties is 
+that it metrises weak convergence on $\mathcal{P}_p(\R^d)$:
+$\W_p(\mu_k, \mu) \to 0, k \to \infty,$
+if and only if $\mu_k$ converges weakly to $\mu$
+\citep[][Theorem 6.9]{Villani2009}.
+Another appealing property, which I will use in a later chapter, 
+is provided in the next lemma.
+
+\mypar[Continuity of $\W$]{Lemma}\label{lemma:continuitywasserstein}
+The $p$-Wasserstein distance is continuous on
+$\mathcal{P}_p(\R^d)$ in the following sense:
+if $(\mu_k)_{k=1}^{\infty}, (\nu_k)_{k=1}^{\infty}$
+converge weakly to $\mu$ and $\nu$ in $\mathcal{P}_p(\R^d)$, respectively, $k \to \infty$,
+then $\W_p(\mu_k, \nu_k) \to \W_p(\mu, \nu), k \to \infty$.
+\parend
+
+\begin{proof}
+  Due to the triangle inequality,
+  \begin{align*}
+    \W_p(\mu_k, \nu_k) - \W_p(\mu, \nu) 
+    &\leq \W_p(\mu_k, \mu) + \W_p(\mu, \nu) + \W_p(\nu, \nu_k) - \W_p(\mu, \nu)  \\
+    &= \W_p(\mu_k, \mu) + \W_p(\nu, \nu_k),
+  \end{align*}
+  which converges to $0$ as $k \to \infty$
+  since $\W_p$ metrises weak convergence on $\mathcal{P}_p(\R^d)$.
+  Similarly,
+  \begin{align*}
+    \W_p(\mu, \nu) - \W_p(\mu_k, \nu_k)
+    &\leq \W_p(\mu, \mu_k) + \W_p(\mu_k, \nu_k) + \W_p(\nu_k, \nu) - \W_p(\mu_k, \nu_k) \\
+    &= \W_p(\mu, \mu_k) + \W_p(\nu_k, \nu),
+  \end{align*}
+  which also converges to $0$ as $k \to \infty$.
+  Hence,
+  \[
+    |\W_p(\mu_k, \nu_k) - \W_p(\mu, \nu)| \to 0,
+  \]
+  as $k \to \infty$.
+\end{proof}
+
+Since the $p$-Wasserstein distance is a distance on
+$\mathcal{P}_p(\R^d)$, we can use it to compute pairwise distances
+between objects that can be encoded as distributions in $\mathcal{P}_p(\R^d)$.
+Distance-based procedures such as $k$-nearest neighbours can 
+subsequently be trained on these distances in order to solve classification 
+and regression problems.
+However, an important class of predictive models, which includes 
+support vector machines and Gaussian process regression, 
+does not work directly with distances between objects $x_1, \dots, x_n$.
+Instead, 
+the pairwise similarity between these objects is expressed by means of a kernel.
+I leave the discussion of what kernels are and how they can be constructed
+and used in predictive modelling for Chapter \ref{ch:gpr}.
+
+\subsection{Computation}
+In the general case, 
+computing the exact $p$-Wasserstein distance between two distributions supported on 
+at most $n$ points has time complexity $\mathcal{O}(n^3 \log n)$,
+whereas an approximate solution can be obtained in $\mathcal{O}(n^2 / \epsilon)$
+for a precision level $\epsilon > 0$ \citep[][Remark 2.3]{Nguyen2025}.
+However, there are two special cases in which Wasserstein distances can be
+computed considerably more cheaply.
+
+The first one concerns Wasserstein distances of order $p = 2$ between
+Gaussian distributions.
+
+\mypar{Proposition}
+  Let $\mu_1 = \mathcal{N}_d(\vect m_1, \mat \Sigma_1), \mu_2 = \mathcal{N}_d(\vect m_2, \mat \Sigma_2)$
+  be Gaussian distributions on $\R^d$ with symmetric positive-definite covariance matrices.
+  Then
+  \[
+    \W_2^2(\mu_1, \mu_2)
+    = \|\vect m_1 - \vect m_2\|^2 + \Tr\left(\mat \Sigma_1 + \mat \Sigma_2 - 2(\mat \Sigma_1^{1/2}\mat \Sigma_2 \mat \Sigma_1^{1/2})^{1/2}\right). \parendeq
+  \]
+
+\begin{proof}
+  See \citet{Dowson1982}.
+  These authors write their result as
+  \[
+    \W^2_2(\mu_1, \mu_2)
+    = \|\vect m_1 - \vect m_2\|^2 + \Tr\left(\mat \Sigma_1 + \mat \Sigma_2 - 2(\mat \Sigma_1\mat \Sigma_2)^{1/2}\right).
+  \]
+  However, since
+  \[
+   \mat \Sigma_1\mat \Sigma_2 = \mat \Sigma_1^{1/2}(\mat \Sigma_1^{1/2}\mat \Sigma_2\mat \Sigma_1^{1/2})\mat \Sigma_1^{-1/2},
+  \]
+  the matrices $\mat \Sigma_1\mat \Sigma_2$ and $\mat \Sigma_1^{1/2}\mat \Sigma_2\mat \Sigma_1^{1/2}$ are similar.
+  In particular, they have the same eigenvalues, and so do their matrix square roots.
+  Consequently, they have the same trace.
+  Later authors seem to prefer the longer version, 
+  perhaps because this makes it easier to appreciate that the distance is symmetric.
+\end{proof}
+
+The second special case, which is key to this thesis, occurs when $d = 1$.
+
+\mypar[Univariate distributions]{Proposition}\label{prop:1D}
+  Let $F_{\mu}^{-1}$ and $F_{\nu}^{-1}$ be the quantile functions
+  of $\mu, \nu \in \mathcal{P}_p(\R)$, respectively.
+  Then
+  \[
+    \W_p^p(\mu, \nu) = \int_0^1 |F_{\mu}^{-1}(t) - F_{\nu}^{-1}(t)|^p \df t. \parendeq
+  \]
+
+\begin{proof}
+  \citet[][p.~21]{Nadjahi2021} cites Theorem 3.1.2(a) in \citet{Rachev1998}
+  as proof for this fact.
+\end{proof}
+
+
+
+If the quantile functions of $\mu$ and $\nu$ are known,
+the integral in Proposition \ref{prop:1D} can be evaluated numerically.
+If $\mu$ and $\nu$ are both discrete distributions that are supported on 
+$m$ and $n$ points, respectively
+(e.g., if $\mu, \nu$ are empirical distributions),
+an exact value can be computed using the
+\term{northwest corner algorithm} (Algorithm \vref{algo:nw_corner}).
+The \textit{while}-loop executes at most $m+n-1$ times,
+so the algorithm's asymptotic time complexity is dominated
+by the sorting operations in lines 2--3.
+This means that the algorithm runs in $\mathcal{O}(N \log N)$, 
+where $N = \max(m, n)$.
+
+\begin{algorithm}[tp]
+\DontPrintSemicolon
+\KwData{A discrete probability distribution $\mu = \sum_{i=1}^{m} \alpha_i\delta_{x_i}$ on $\R$\\
+A discrete probability distribution $\nu = \sum_{j=1}^{n} \beta_j\delta_{y_j}$ on $\R$\\
+An order $p \geq 1$}
+\KwResult{$W = \W_p\left(\mu, \nu\right)$}
+\texttt{NorthWestCorner}($\mu, \nu, p$):\;
+\Indp
+  {Let $(\alpha_{(i)}, x_{(i)})_{i=1}^{m}$ be $(\alpha_i, x_i)_{i=1}^{m}$ sorted in ascending order of $\vect x$.}\;
+  {Let $(\beta_{(j)}, y_{(j)})_{j=1}^{n}$ be $(\beta_j, y_j)_{j=1}^{n}$ sorted in ascending order of $\vect y$.}\;
+  {$W \leftarrow 0$}\;
+  {$i \leftarrow 1$}\;
+  {$j \leftarrow 1$}\;
+  {$a \leftarrow \alpha_{(1)}$}\;
+  {$b \leftarrow \beta_{(1)}$}\;
+  \While{$i \leq m, j \leq n$}{
+    {$t \leftarrow \min(a, b)$}\;
+    {$W \leftarrow W + t|x_{(i)} - y_{(j)}|^p$}\;
+    {$a \leftarrow a - t$}\;
+    {$b \leftarrow b - t$}\;
+    \If{$a = 0$}{
+      {$i \leftarrow i + 1$}\;
+      \If{$i \leq m$}{
+        {$a \leftarrow \alpha_{(i)}$}\;
+      }
+    }
+    \If{$b = 0$}{
+      {$j \leftarrow j + 1$}\;
+      \If{$j \leq n$}{
+        {$b \leftarrow \beta_{(j)}$}\;
+      }
+    }
+  }
+  {$W \leftarrow W^{1/p}$}\;
+  \Return{$W$}
+\caption{The northwest corner algorithm.}\label{algo:nw_corner}
+\end{algorithm}
+
+If
+\[
+  \mu = \frac{1}{n} \sum_{i=1}^n \delta_{x_i}
+  ~~\textrm{and}~~~
+  \nu = \frac{1}{n} \sum_{i=1}^n \delta_{y_i},
+\]
+with $\vect x, \vect y \in \R^n$, computing the Wasserstein distance between $\mu$ and $\nu$
+reduces to a straightforward sorting problem with time complexity $\mathcal{O}(n \log n)$:
+\[
+  \W_p^p(\mu, \nu) = \frac{1}{n}\sum_{i=1}^n|x_{(i)} - y_{(i)}|^p,
+\]
+where $u_{(i)}$ is the $i$-th order statistic of $\vect u$.
+
+\section{Sliced Wasserstein distances}
+Unlike in the general case, Wasserstein distances between univariate
+distributions are easy to compute, particularly between discrete distributions.
+This led \citet{Rabin2012} to define a distance between
+multidimensional probability distributions in terms of the Wasserstein
+distances between one-dimensional projections of these distributions.
+This approach, termed sliced Wasserstein distances, has gained
+considerable traction since then.
+A recent book-length treatment of sliced Wasserstein distances
+and further developments is provided by \citet{Nguyen2025}.
+
+\subsection{Definition and properties}
+To recall, we define the unit sphere of $\R^d$ in terms of the Euclidean norm, that is,
+\[
+  \Sphere^{d-1} := \{\vect \theta \in \R^d : \|\vect \theta\| = 1\}.
+\]
+The uniform distribution on $\Sphere^{d-1}$ is denoted as $\sigma$.
+The sliced Wasserstein distance is now formally defined as follows.
+
+\mypar[Sliced Wasserstein distance]{Definition}
+  For $\mu, \nu \in \mathcal{P}_p(\R^d), p \geq 1, d \geq 1$, the 
+  \term{sliced Wasserstein distance} of order $p$ between $\mu$ and $\nu$ is defined as
+  \[
+    \SW_p(\mu, \nu) := \left(\int \W_p^p(\theta^{\star}_{\#}\mu, \theta^{\star}_{\#}\nu) \df \sigma(\theta)\right)^{\frac{1}{p}}.\parendeq
+  \]
+
+In probabilistic terms, the sliced Wasserstein distance can be written as
+\[
+  \SW_p(\mu, \nu) = \left(\E_{\vect \theta \sim \sigma}\left(\W_p^p(\vect \theta^{\star}_{\#}\mu, \vect \theta^{\star}_{\#}\nu)\right)\right)^{\frac{1}{p}}.
+\]
+
+For $\vect X \sim \mu, \vect Y \sim \nu$, it is often convenient to write
+\[
+  \SW_p(\mu, \nu) =: \SW_p(\vect X, \vect Y) = \left(\int \W_p^p(\langle \vect X, \theta \rangle, \langle \vect Y, \theta \rangle) \df \sigma(\theta)\right)^{\frac{1}{p}}.
+\]
+Similarly, if $\mu, \nu$ are empirical distributions represented by matrices
+$\mat M_1, \mat M_2$, I will occasionally write
+\[
+  \SW_p(\mu, \nu) =: \SW_p(\mat M_1, \mat M_2) = \left(\int \W_p^p(\mat M_1\theta, \mat M_2\theta) \df \sigma(\theta)\right)^{\frac{1}{p}}.
+\]
+
+Figure \vref{fig:sliced} illustrates the intuition behind the 
+definition of the sliced Wasserstein distance.
+
+<<echo=FALSE, fig.align = "center", fig.height = 2.8, out.width = "\\textwidth", fig.cap = "The circles and triangles are projected orthogonally onto the span of the unit vectors $\\vect \\theta_1$ (left) and $\\vect \\theta_2$ (right). In each case, the $p$-Wasserstein distance between the projected distributions can easily be computed. The sliced Wasserstein distance of order $p$ is defined in terms of the expectation of the $p$-Wasserstein distance between such projected distributions for a random vector $\\vect \\theta$ sampled uniformly from the unit sphere.\\label{fig:sliced}", dev = "cairo_pdf">>=
+set.seed(2026-05-13)
+x <- rbind(MASS::mvrnorm(2, c(3, 1), rbind(c(2, 0.4), c(0.4, 1))), 
+           MASS::mvrnorm(3, c(-1, 4), rbind(c(1, -0.3), c(-0.3, 0.8))))
+y <- rbind(MASS::mvrnorm(4, c(-2, 2), rbind(c(0.6, 0), c(0, 0.9))))
+x <- x
+y <- y
+thetas <- c(7/8*pi, 3/8*pi)
+
+# my_cols <- c("#d95f02", "#7570b3", "#1b9e77")
+# light_blue <- adjustcolor("#7570b3", alpha.f = 1)
+# light_red  <- adjustcolor("#d95f02",  alpha.f = 1)
+# light_green <- adjustcolor("#1b9e77", alpha.f = 0.2)
+
+my_cols <- c("black", "black", "black")
+light_blue <- "black"
+light_red  <- "black"
+light_green<- "black"
+
+proj <- function(P, u) {
+  s <- P %*% u        
+  s %*% t(u)           
+}
+proj_angle <- function(P, theta) {
+  u <- c(cos(theta), sin(theta))
+  proj(P, u)           
+}
+
+xlim <- range(proj_angle(x, thetas[1])[, 1], 
+              proj_angle(y, thetas[1])[, 1],
+              proj_angle(x, thetas[2])[, 1], 
+              proj_angle(y, thetas[2])[, 1],
+              x[, 1], y[, 1])
+ylim <- range(proj_angle(x, thetas[1])[, 2], 
+              proj_angle(y, thetas[1])[, 2],
+              proj_angle(x, thetas[2])[, 2], 
+              proj_angle(y, thetas[2])[, 2],
+              x[, 2], y[, 2])
+
+draw_slice <- function(x, y, theta, label, axes = TRUE, xlim, ylim) {
+  plot(x, asp = 1, col = my_cols[2], pch = 16,
+       xlim = xlim, ylim = ylim,
+       xlab = "", 
+       ylab = "", axes = FALSE)
+  points(y, col = my_cols[1], pch = 17)
+  
+  theta_seq <- seq(0, 2*pi, length.out = 200)
+  lines(cos(theta_seq), sin(theta_seq), lwd = 0.5)
+  
+  u <- c(cos(theta), sin(theta))
+  text(u[1], u[2], labels = parse(text = label), 
+       col = my_cols[3])
+  abline(a = 0, b = u[2]/u[1], lwd = 0.5, col = light_green)
+  
+  # projections
+  x_proj <- proj(x, u)
+  y_proj <- proj(y, u)
+  
+  # draw projected points
+  points(x_proj, col = light_blue, pch = 1)
+  points(y_proj, col = light_red, pch = 2)
+  
+  # draw projection segments
+  segments(x[,1], x[,2], x_proj[,1], x_proj[,2], col = my_cols[2], lty = 2)
+  segments(y[,1], y[,2], y_proj[,1], y_proj[,2], col = my_cols[1], lty = 2)
+  
+  if (axes) {
+    abline(h = 0, v = 0, col = "grey85", lty = 2)
+  }
+}
+
+op <- par(no.readonly = TRUE)
+layout(matrix(1:3, nrow = 1), widths = c(1, 1/3, 1))
+par(bty = "n", mar = c(0, 0, 0, 0), cex = 1.5)
+draw_slice(x, y, thetas[1], "theta[1]", xlim = xlim, ylim = ylim)
+plot.new()
+draw_slice(x, y, thetas[2], "theta[2]", xlim = xlim, ylim = ylim)
+par(op)
+@
+
+
+Like the $p$-Wasserstein distance, the sliced Wasserstein distance of order $p$
+is a distance on $\mathcal{P}_p(\R^d)$ (\citealp{Bonnotte2013}, Proposition 5.1.2;
+see also \citealp{Nadjahi2021}, Proposition 7.1, for a more general statement).
+Further theoretical properties such as the relation between weak convergence
+and the convergence under $\SW_p$ are discussed by \citet[][Chapter 7]{Nadjahi2021},
+but these findings are not relevant for the remainder of this thesis.
+
+\subsection{Computation and estimation}
+In practice, sliced Wasserstein distances need to be estimated using 
+Monte Carlo simulation.
+The use case that is relevant for this thesis is when
+$\mu = m^{-1}\sum_{i=1}^m \delta_{\vect x_i}$
+and $\nu = n^{-1}\sum_{j=1}^n \delta_{\vect y_j}$
+are discrete (empirical) distributions on $\R^d$.
+Representing these distributions in matrix form as
+\[
+  \mat M_1 = \begin{pmatrix} \vect x_1\T \\ \vdots \\ \vect x_m\T \end{pmatrix}
+  ~~~\textrm{and}~~~
+  \mat M_2 = \begin{pmatrix} \vect y_1\T \\ \vdots \\ \vect y_n\T \end{pmatrix},
+\]
+the sliced Wasserstein distance of order $p$ between $\mu$ and $\nu$
+is estimated as
+\[
+  \widehat \SW_p^p(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)
+  := \frac{1}{L} \sum_{\ell = 1}^L \W_p^p(\mat M_1 \vect \theta_{\ell}, \mat M_2 \vect \theta_{\ell}),
+\]
+with $\vect \theta_1, \dots, \vect \theta_L \simiid \sigma, L \geq 1$.
+\citet[][Remark 2.17]{Nguyen2025} bounds the Monte Carlo estimation error
+as
+\[
+  \E\left|\widehat \SW_p^p(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L) - \SW_p^p(\mu, \nu)\right|
+  \leq \frac{1}{\sqrt{L}} \Var_{\vect \theta \sim \sigma}\left(\W_p^p(\mat M_1 \vect \theta, \mat M_2\vect \theta)\right)^{\frac{1}{2}}.
+\]
+When estimating pairwise sliced Wasserstein distances between $N$ empirical distributions
+each supported on $n$ points in $\R^d$,
+the analyst needs to sample $L$ independent vectors $\vect \theta_1, \dots, \vect \theta_L$ from $\sigma$,
+compute $LN$ products involving $N$ $n \times d$ matrices and $L$ $d$-dimensional vectors (time complexity in $\mathcal{O}(LNnd)$),
+and then sort the resulting $LN$ $n$-dimensional vectors (time complexity in $\mathcal{O}(LNn\log n)$).
+On sorted inputs, the northwest corner algorithm runs in linear time, 
+so the final step involves $\mathcal{O}(N^2)$ computations that each have time complexity $\mathcal{O}(Ln)$.
+Putting everything together, the $N(N-1)/2$ sliced Wasserstein distances can be estimated in 
+\[
+  \mathcal{O}(LNnd + LNn\log n + N^2Ln) = \mathcal{O}(LNn(d + \log n + N)).
+\]
+
+In the next chapter, we will see how Wasserstein and sliced Wasserstein distances
+can be used in a kernel-based regression framework.
