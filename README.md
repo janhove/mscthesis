@@ -3,6 +3,15 @@
 My Master's thesis in Statistics and Data Science, including R scripts.
 See https://github.com/janhove/slicer for details about the `slicer` package.
 
+## Thesis
+The source (`.Rnw`) files for my thesis as well as the compiled PDF
+are in the `thesis` directory. 
+
+The `unified.bst` and `unified.csl` files in this directory implement
+the _Unified Style Sheet for Linguistics_ referencing style, which I like.
+They were created by Mark Dingsemanse and shared under a 
+[CC BY-SA 3.0 license](https://creativecommons.org/licenses/by-sa/3.0/).
+
 ## Scripts
 
 * `toy_example.R` generates the data for the toy example of Chapter 4,
