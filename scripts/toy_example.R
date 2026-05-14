@@ -2,7 +2,7 @@
 # Toy example: Identical marginal distributions and correlations,
 # but different distributions
 # 
-# last change: 2026-05-08
+# last change: 2026-05-14
 #-------------------------------------------------------------------------------
 
 # Random seed for reproducibility ----------------------------------------------
@@ -191,7 +191,7 @@ for (run in seq_len(runs)) {
   results <- rbind(results, my_results) 
   
   # Kernel learnt from cardinal axes. ------------------------------------------
-  cardinal_axes <- fit_gpr_multiple(cardinal_distances, training_idx, test_idx, 
+  cardinal_axes <- fit_gpr(cardinal_distances, training_idx, test_idx, 
     y_train, y_test)
   combined_models[[run]] <- cardinal_axes
   my_results <- data.frame(
@@ -356,7 +356,7 @@ for (run in seq_len(runs)) {
   results <- rbind(results, my_results) 
   
   # Kernel learnt from cardinal axes. ------------------------------------------
-  cardinal_axes <- fit_gpr_multiple(cardinal_distances, training_idx, 
+  cardinal_axes <- fit_gpr(cardinal_distances, training_idx, 
     test_idx, y_train, y_test)
   combined_models[[run]] <- cardinal_axes
   my_results <- data.frame(
@@ -394,10 +394,9 @@ devtools::session_info("attached")
 # collate  English_United Kingdom.utf8
 # ctype    English_United Kingdom.utf8
 # tz       Europe/Zurich
-# date     2026-05-11
+# date     2026-05-14
 # rstudio  2023.06.1+524 Mountain Hydrangea (desktop)
 # (...)
-# 
 # ─ Packages ───────────────────────────────────────────────────────────────────
 # package      * version    date (UTC) lib source
 # dplyr        * 1.2.1      2026-04-03 [1] CRAN (R 4.5.3)
@@ -408,7 +407,7 @@ devtools::session_info("attached")
 # purrr        * 1.0.4      2025-02-05 [1] CRAN (R 4.5.0)
 # randomForest * 4.7-1.2    2024-09-22 [1] CRAN (R 4.5.2)
 # readr        * 2.2.0      2026-02-19 [1] CRAN (R 4.5.3)
-# slicer       * 0.0.0.9000 2026-05-11 [1] Github (janhove/slicer@83f3f04)
+# slicer       * 0.0.0.9000 2026-05-14 [1] Github (janhove/slicer@7c516a3)
 # stringr      * 1.6.0      2025-11-04 [1] CRAN (R 4.5.3)
 # tibble       * 3.2.1      2023-03-20 [1] CRAN (R 4.5.0)
 # tidyr        * 1.3.2      2025-12-19 [1] CRAN (R 4.5.3)
