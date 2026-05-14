@@ -11,6 +11,9 @@ the _Unified Style Sheet for Linguistics_ referencing style, which I like.
 They were created by Mark Dingsemanse and shared under a 
 [CC BY-SA 3.0 license](https://creativecommons.org/licenses/by-sa/3.0/).
 
+The other files in the `thesis` directory are licensed under the CC BY-SA 4.0
+license, see `LICENSE-thesis`.
+
 ## Scripts
 * `toy_example.R` generates the data for the toy example of Chapter 4,
   computes the (sliced) Wasserstein distances, and fit the Gaussian process
@@ -23,14 +26,14 @@ They were created by Mark Dingsemanse and shared under a
   with the results.
 * `brains.R` runs the analyses for Section 5.6.
 
+The scripts are licensed under the MIT license, see `LICENSE-scripts`.
+
 ## Data
 The data from Eckermann et al.'s (2021) study that are used for the examples
 in Section 5.6 are available as part of a 64.8 GB zipped directory
 from [zenodo](https://doi.org/10.5281/zenodo.5658994).
 I extracted the relevant Excel files from this directory and made them
 available here under `data/eckerman/` as allowed under the [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/).
-
-!! ADD LICENCES BEFORE MAKING PUBLIC !!
 
 ## References
 Eckermann, Marina, Bernhard Schmitzer, Franziska van der Meer, 
