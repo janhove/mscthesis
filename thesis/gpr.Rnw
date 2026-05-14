@@ -412,7 +412,7 @@ distances thanks to the following proposition \citep[][Proposition 4.10]{Nguyen2
   We denote by $L^2([0,1] \times \Sphere^{d-1})$ the quotient space obtained by
   identifying the functions in
   \[
-    \left\{f : [0,1] \times \Sphere^{d-1} \to \R : \int_{\Sphere^{d-1}} \int_0^1 f(t, \theta) \df t \df \sigma(\theta) < \infty \right\}
+    \left\{f : [0,1] \times \Sphere^{d-1} \to \R : \int_{\Sphere^{d-1}} \int_0^1 f^2(t, \theta) \df t \df \sigma(\theta) < \infty \right\}
   \]
   agreeing Lebesgue-almost everywhere.
   When equipped with the inner product
@@ -432,7 +432,7 @@ distances thanks to the following proposition \citep[][Proposition 4.10]{Nguyen2
   \begin{align*}
     \SW_2(\mu, \nu)
     &= \left(\E_{\vect \theta \sim \sigma} \W_2^2(\vect \theta^{\star}_{\#} \mu, \vect \theta^{\star}_{\#} \nu)\right)^{\frac{1}{2}} \\
-    &= \left(\E_{\vect \theta \sim \sigma} \left(\int_0^1 \left|F^{-1}_{\vect \theta^{\star}_{\#} \mu}(t) - F^{-1}_{\vect \theta^{\star}_{\#} \nu}(t)\right|^2\right)\right)^{\frac{1}{2}} \\
+    &= \left(\E_{\vect \theta \sim \sigma} \left(\int_0^1 \left|F^{-1}_{\vect \theta^{\star}_{\#} \mu}(t) - F^{-1}_{\vect \theta^{\star}_{\#} \nu}(t)\right|^2 \df t\right)\right)^{\frac{1}{2}} \\
     &= \|\phi(\mu) - \phi(\nu)\|_{L^2([0,1] \times \Sphere^{d-1})}. \qedhere
   \end{align*}
 \end{proof}
