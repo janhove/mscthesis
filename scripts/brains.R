@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------
 # Analysis of brain data
 # 
-# last change: 2026-05-11
+# last change: 2026-05-14
 #-------------------------------------------------------------------------------
 
 # Random seed ------------------------------------------------------------------
@@ -245,26 +245,26 @@ for (i in seq_along(input_distributions)) {
   outcome_test <- outcomes[i]
   
   predictions[i, 1] <- fit_gpr(sw_dist, training_idx, i, 
-                                 outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 2] <- fit_gpr_multiple(marginal_dist, training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 2] <- fit_gpr(marginal_dist, training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
   predictions[i, 3] <- fit_gpr(loocv_sw_dists_scaled[[i]], training_idx, i,
-                                 outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
   predictions[i, 4] <- fit_gpr(loocv_sw_dists_whitened[[i]], training_idx, i,
-                                 outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 5] <- fit_gpr_multiple(loocv_marginal_dists_zca[[i]], training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 6] <- fit_gpr_multiple(loocv_marginal_dists_zca_cor[[i]], training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 7] <- fit_gpr_multiple(loocv_marginal_dists_pca[[i]], training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 8] <- fit_gpr_multiple(loocv_marginal_dists_pca_cor[[i]], training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 9] <- fit_gpr_multiple(loocv_marginal_dists_cholesky[[i]], training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 5] <- fit_gpr(loocv_marginal_dists_zca[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 6] <- fit_gpr(loocv_marginal_dists_zca_cor[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 7] <- fit_gpr(loocv_marginal_dists_pca[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 8] <- fit_gpr(loocv_marginal_dists_pca_cor[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 9] <- fit_gpr(loocv_marginal_dists_cholesky[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
   predictions[i, 10] <- mean(outcome_train)
-  predictions[i, 11] <- fit_gpr_multiple(loocv_marginal_dists_scaled[[i]], training_idx, i,
-                                           outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 11] <- fit_gpr(loocv_marginal_dists_scaled[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
   setTxtProgressBar(pb, i)
 }
 cat("\n")
@@ -313,26 +313,26 @@ for (i in seq_along(input_distributions)) {
   outcome_test <- outcomes[i]
   
   predictions[i, 1] <- fit_gpr(sw_dist, training_idx, i, 
-                                 outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 2] <- fit_gpr_multiple(marginal_dist, training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 2] <- fit_gpr(marginal_dist, training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
   predictions[i, 3] <- fit_gpr(loocv_sw_dists_scaled[[i]], training_idx, i,
-                                 outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
   predictions[i, 4] <- fit_gpr(loocv_sw_dists_whitened[[i]], training_idx, i,
-                                 outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 5] <- fit_gpr_multiple(loocv_marginal_dists_zca[[i]], training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 6] <- fit_gpr_multiple(loocv_marginal_dists_zca_cor[[i]], training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 7] <- fit_gpr_multiple(loocv_marginal_dists_pca[[i]], training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 8] <- fit_gpr_multiple(loocv_marginal_dists_pca_cor[[i]], training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 9] <- fit_gpr_multiple(loocv_marginal_dists_cholesky[[i]], training_idx, i,
-                                          outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 5] <- fit_gpr(loocv_marginal_dists_zca[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 6] <- fit_gpr(loocv_marginal_dists_zca_cor[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 7] <- fit_gpr(loocv_marginal_dists_pca[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 8] <- fit_gpr(loocv_marginal_dists_pca_cor[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 9] <- fit_gpr(loocv_marginal_dists_cholesky[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
   predictions[i, 10] <- mean(outcome_train)
-  predictions[i, 11] <- fit_gpr_multiple(loocv_marginal_dists_scaled[[i]], training_idx, i,
-                                           outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  predictions[i, 11] <- fit_gpr(loocv_marginal_dists_scaled[[i]], training_idx, i,
+    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
   setTxtProgressBar(pb, i)
 }
 cat("\n")
@@ -366,3 +366,37 @@ df_predictions |>
   theme_bw() +
   theme(axis.text = element_text(colour = "black"))
 ggsave(here("figures", "brain_entropy.pdf"), width = 1.3*6.3, height = 1.3*4.7)
+
+# Session info -----------------------------------------------------------------
+devtools::session_info("attached")
+# ─ Session info ───────────────────────────────────────────────────────────────
+# setting  value
+# version  R version 4.5.0 (2025-04-11 ucrt)
+# os       Windows 11 x64 (build 26200)
+# system   x86_64, mingw32
+# ui       RStudio
+# language (EN)
+# collate  English_United Kingdom.utf8
+# ctype    English_United Kingdom.utf8
+# tz       Europe/Zurich
+# date     2026-05-14
+# rstudio  2023.06.1+524 Mountain Hydrangea (desktop)
+# (...)
+# ─ Packages ───────────────────────────────────────────────────────────────────
+# package      * version    date (UTC) lib source
+# dplyr        * 1.2.1      2026-04-03 [1] CRAN (R 4.5.3)
+# forcats      * 1.0.1      2025-09-25 [1] CRAN (R 4.5.3)
+# ggplot2      * 4.0.3      2026-04-22 [1] CRAN (R 4.5.3)
+# here         * 1.0.2      2025-09-15 [1] CRAN (R 4.5.3)
+# lubridate    * 1.9.5      2026-02-04 [1] CRAN (R 4.5.3)
+# purrr        * 1.0.4      2025-02-05 [1] CRAN (R 4.5.0)
+# randomForest * 4.7-1.2    2024-09-22 [1] CRAN (R 4.5.2)
+# readr        * 2.2.0      2026-02-19 [1] CRAN (R 4.5.3)
+# readxl       * 1.4.5      2025-03-07 [1] CRAN (R 4.5.0)
+# slicer       * 0.0.0.9000 2026-05-14 [1] Github (janhove/slicer@7c516a3)
+# stringr      * 1.6.0      2025-11-04 [1] CRAN (R 4.5.3)
+# tibble       * 3.2.1      2023-03-20 [1] CRAN (R 4.5.0)
+# tidyr        * 1.3.2      2025-12-19 [1] CRAN (R 4.5.3)
+# tidyverse    * 2.0.0      2023-02-22 [1] CRAN (R 4.5.3)
+# (...)
+################################################################################
