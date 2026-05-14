@@ -11,12 +11,12 @@ the _Unified Style Sheet for Linguistics_ referencing style, which I like.
 They were created by Mark Dingsemanse and shared under a 
 [CC BY-SA 3.0 license](https://creativecommons.org/licenses/by-sa/3.0/).
 
-The other files in the `thesis` directory are licensed under the CC BY-SA 4.0
+The other files in the `thesis` directory are licensed under the CC BY 4.0
 license, see `LICENSE-thesis`.
 
 ## Scripts
 * `toy_example.R` generates the data for the toy example of Chapter 4,
-  computes the (sliced) Wasserstein distances, and fit the Gaussian process
+  computes the (sliced) Wasserstein distances, and fits the Gaussian process
   models.
 * `toy_example_figures.R` takes the output of `toy_example.R` and generates
   the figures from Chapter 4.
