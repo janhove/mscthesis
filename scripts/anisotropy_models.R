@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------
 # Anisotropy: GP models and figures
 # 
-# last change: 2026-05-08
+# last change: 2026-05-14
 #-------------------------------------------------------------------------------
 
 # Random seed for reproducibility ----------------------------------------------
@@ -237,7 +237,7 @@ for (r in 1:R) {
   y_test <- outcome_list[[r]]$y_test
   current_path <- paste0("cardinal_distances_run_", r, ".Rda")
   distances <- readRDS(here("results", "anisotropy", current_path))
-  my_model <- fit_gpr_multiple(distances, training_idx, test_idx, y_train, y_test)
+  my_model <- fit_gpr(distances, training_idx, test_idx, y_train, y_test)
   rmses[i] <- my_model$RMSE
   i <- i + 1
 }
@@ -441,7 +441,7 @@ for (r in 1:R) {
   y_test <- outcome_list[[r]]$y_test
   current_path <- paste0("cardinal_distances_run_", r, ".Rda")
   distances <- readRDS(here("results", "anisotropy", current_path))
-  my_model <- fit_gpr_multiple(distances, training_idx, test_idx, y_train, y_test)
+  my_model <- fit_gpr(distances, training_idx, test_idx, y_train, y_test)
   predictions <- gpr_predict(Kxx, Kxstar, y_train, lambda2 = fixed_nugget, centre = TRUE)
   rmses[i] <- my_model$RMSE
   i <- i + 1
