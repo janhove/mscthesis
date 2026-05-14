@@ -1,0 +1,686 @@
+\chapter{Kernels and kernel-based regression}\label{ch:gpr}
+This chapter develops the regression framework that I will use in the
+remainder of the thesis: Gaussian process regression.
+This method assumes that we have at our disposal a way to express
+the similarity between the input objects.
+More precisely, it assumes that this similarity is expressed using a
+positive-definite kernel.
+
+\mypar[Positive-definite kernel]{Definition}
+  Let $\set X$ be a non-empty set.
+  A function $k : \set X \times \set X \to \R$
+  is called a \term{positive-definite kernel} on $\mathcal{X}$
+  if
+  \begin{enumerate}[label=(K\arabic*)]
+    \item $k$ is symmetric, i.e., if $k(x, x') = k(x', x)$ for all $x, x' \in \set X$, and
+    \item for all $x_1, \dots, x_n \in \set X, c_1, \dots, c_n \in \R, n \geq 1$,
+    it holds that
+    \[
+      \sum_{i=1}^n\sum_{j=1}^n c_ic_jk(x_i, x_j) \geq 0.
+    \]
+  \end{enumerate}
+  These conditions are equivalent to requiring that, for any $n \geq 1$ 
+  and any choice of $x_1, \dots, x_n \in \set X$, the matrix
+  \[
+    \mat K = (k(x_i, x_j))_{1 \leq i, j \leq n}
+  \]
+  is symmetric positive semi-definite.
+\parend
+
+Given two positive-definite kernels, 
+further ones may be constructed in various ways.
+The two ways we will use are licensed by the following lemma.
+
+\mypar{Lemma}\label{lemma:spsd}
+  Let $k_1, k_2 : \mathcal{X} \times \mathcal{X} \to \R$
+  be two positive-definite kernels on $\mathcal{X}$.
+  Then both their sum $k_1 + k_2$ and their pointwise product $k_1k_2$
+  are positive-definite kernels, too.
+\parend
+
+\begin{proof}
+  The symmetry of $k_1 + k_2$ and $k_1k_2$ follows immediately
+  from the symmetry of $k_1$ and $k_2$.
+
+  As for the positive-definiteness of $k_1 + k_2$,
+  consider arbitrary $x_1, \dots, x_n \in \mathcal{X}, c_1, \dots, c_n \in \R, n \geq 1$.
+  By the positive-definiteness of $k_1$ and $k_2$, it holds that
+  \[
+    \sum_{i=1}^n\sum_{j=1}^n c_ic_j(k_1(x_i, x_j) + k_2(x_i, x_j))
+    = \sum_{i=1}^n\sum_{j=1}^n c_ic_jk_1(x_i, x_j) + \sum_{i=1}^n\sum_{j=1}^n c_ic_jk_2(x_i, x_j) \geq 0 + 0,
+  \]
+  so $k_1 + k_2$ is a positive-definite kernel.
+
+  We now consider the pointwise product.
+  For $n \geq 1$, write
+  \[
+    \mat A = (k_1(x_i, x_j))_{1 \leq i, j \leq n} ~~~\textrm{and}~~~ 
+    \mat B = (k_2(x_i, x_j))_{1 \leq i, j \leq n}.
+  \]
+  Both $\mat A$ and $\mat B$ are real symmetric positive semi-definite matrices,
+  so we may write them in terms of an eigenvalue decomposition:
+  \[
+    \mat A = \sum_{k = 1}^n a_k \vect u_k \vect u_k\T ~~~\textrm{and}~~~ 
+    \mat B = \sum_{\ell = 1}^n b_{\ell} \vect v_{\ell} \vect v_{\ell}\T,
+  \]
+  with eigenvalues $a_k, b_{\ell} \geq 0, 1 \leq k, \ell \leq n$.
+  Denoting the pointwise (Hadamard) product between $\mat A$ and $\mat B$ as
+  \[
+    \mat A \odot \mat B := (A_{ij}B_{ij})_{1 \leq i, j \leq n},
+  \]
+  we obtain, for arbitrary $\vect c \in \R^n$,
+  \begin{align*}
+    \vect c\T (\mat A \odot \mat B) \vect c
+    &= \sum_{i=1}^n \sum_{j=1}^n c_i c_j (\mat A \odot \mat B)_{ij} \\
+    &= \sum_{i=1}^n \sum_{j=1}^n c_i c_j \left(\sum_{k=1}^n a_k u_{ki} u_{kj}\right)\left(\sum_{\ell=1}^n b_{\ell} v_{\ell i} v_{\ell j}\right) \\
+    &= \sum_{i=1}^n \sum_{j=1}^n \sum_{k=1}^n \sum_{\ell=1}^n a_k b_{\ell} c_i u_{ki}v_{\ell i} c_j u_{kj} v_{\ell j} \\
+    &= \sum_{k=1}^n \sum_{\ell=1}^n a_k b_{\ell} \left(\sum_{i=1}^n c_i u_{ki} v_{\ell i}\right)\left(\sum_{j=1}^n c_j u_{kj} v_{\ell j}\right)\\
+    &= \sum_{k=1}^n \sum_{\ell=1}^n \underbrace{a_k b_{\ell}}_{\geq 0} \left(\sum_{i=1}^n c_i u_{ki} v_{\ell i}\right)^2\\
+    &\geq 0.
+  \end{align*}
+  Consequently, $\mat A \odot \mat B$ is symmetric positive semi-definite,
+  which means that the pointwise product $k_1k_2$ is a positive-definite kernel.
+\end{proof}
+
+I postpone the discussion of how we can construct such positive-definite
+kernels by means of Wasserstein and sliced Wasserstein distances 
+to Section \ref{sec:wassersteinkernels}.
+First, in Section \ref{sec:gpr}, I discuss the basics of Gaussian process
+regression while taking for granted that a suitable positive-definite kernel
+is available.
+The chapter closes with a discussion of how 
+the hyperparameters in the 
+kernels and in the Gaussian process regression proper can be optimised
+via likelihood maximisation.
+
+\section{Gaussian process regression}\label{sec:gpr}
+An introduction into the theory of Gaussian process regression is 
+provided by \citet{Rasmussen2006}.
+Here, I only cover the nuts and bolts insofar as they are relevant
+for the remainder of this thesis.
+I do not rederive the formulae below myself;
+I merely reproduce them from \citet{Rasmussen2006} with slight changes
+in notation in order to be more consistent with the notation used in this thesis.
+
+Let $\vect x = (x_i)_{i=1}^{N_1} \subset \mathcal{X}$ be input data for which
+we observe outcomes $y_1, \dots, y_{N_1} \in \R$.
+We assume that 
+\[
+  y_i = f(x_i) + \varepsilon_i, i = 1, \dots, N_1,
+\]
+with fixed inputs $\vect x$
+and i.i.d.\ random errors $\varepsilon_1, \dots, \varepsilon_{N_1} \sim \mathcal{N}(0, \eta^2), \eta^2 \geq 0$.
+The process $f : \mathcal{X} \to \R$ is modelled as a \term{Gaussian process},
+that is, as an indexed collection of random variables
+$(f(x))_{x \in \mathcal{X}}$
+such that $(f(x_1), \dots, f(x_n))$ has an $n$-variate normal distribution for any $n \geq 1$.
+Treating $f$ as stochastic allows us to do inference on its posterior distribution;
+for present purposes, however, only point predictions are of interest,
+which are obtained as the posterior mean.
+I only consider Gaussian processes with a constant mean $m \in \R$,
+which are fully specified by a covariance function represented by a positive-definite kernel
+$k : \mathcal{X} \times \mathcal{X} \to \R, (x, x') \mapsto \Cov(f(x), f(x'))$.
+
+The data points $(x_i, y_i)_{i=1}^{N_1}$ comprise the training set.
+We are given a further $N_2$ elements of $\mathcal{X}$,
+namely $\vect x_* = (x_i)_{i=N_1+1}^{N_1+N_2}$,
+and wish to obtain an estimate of $f(x_i)$ for $i = N_1+1, \dots, N_1+N_2$.
+In the following, I write
+$\vect y = (y_1, \dots, y_{N_1})\T$
+for the vector of training outcomes,
+$\overline y = (N_1)^{-1}\sum_{i=1}^{N_1} y_i$ for their sample mean,
+and $\vect f_* = (f(x_{N_1+1}), \dots, f(x_{N_1 + N_2}))\T$
+for the vector of test outcomes that we want to estimate.\footnote{The point
+predictions for a single test object $x_{N_1 + i}$ do not depend on the other
+components of $\vect x_*$. As long as the training objects $\vect x$
+remain available so that the matrix $\mat K(\vect x, \vect x_*)$
+can be constructed, the test objects $\vect x_*$ do not need to be known at the time
+when the model's hyperparameters are tuned; see Section \ref{sec:tuning}.}
+
+A positive-definite kernel function $k : \mathcal{X} \times \mathcal{X} \to \R$
+expresses the pairwise similarity between elements of $\mathcal{X}$.
+We construct the kernel matrix
+\[
+  \mat K := k(x_i, x_j)_{1 \leq i, j \leq N_1 + N_2}
+\]
+and define the submatrices
+\begin{align*}
+  \mat K(\vect x, \vect x) &:= (K_{ij})_{1 \leq i, j \leq N_1}, \\
+  \mat K(\vect x, \vect x_*) &:= (K_{ij})_{1 \leq i \leq N_1, N_1+1 \leq j \leq N_1 + N_2}, \\
+  \mat K(\vect x_*, \vect x) &:= \mat K(\vect x, \vect x_*)\T, \\
+  \mat K(\vect x_*, \vect x_*) &:= (K_{ij})_{N_1 + 1 \leq i, j \leq N_1 + N_2}.
+\end{align*}
+
+In Gaussian process regression, the joint distribution of 
+$\vect y$ and $\vect f_*$ is modelled as a multivariate normal distribution with covariance matrix
+\[
+  \begin{pmatrix}
+    \mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1} & \mat K(\vect x, \vect x_*) \\
+    \mat K(\vect x_*, \vect x) & \mat K(\vect x_*, \vect x_*)
+  \end{pmatrix}.
+\]
+The mean of this multivariate normal distribution is assumed to be zero.
+If the outcome data do not have a natural zero, it is standard practice
+to force this assumption by centring the outcomes around some $m \in \R$,
+with $m = \overline y$ being a common choice.
+In the formulae below, I made this centring step explicit:
+\[
+  \begin{bmatrix}
+    \vect y - m \ones_{N_1} \\
+    \vect f_* - m \ones_{N_2}
+  \end{bmatrix}
+  \sim
+  \mathcal{N}_{N_1 + N_2}\left(\bm 0, 
+    \begin{bmatrix}
+      \mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1} & \mat K(\vect x, \vect x_*) \\
+      \mat K(\vect x_*, \vect x) & \mat K(\vect x_*, \vect x_*)
+    \end{bmatrix}
+    \right).
+\]
+
+Having observed $\vect x, \bm y$ and $\vect x_*$,
+we can obtain the distribution of 
+$\vect f_* - m \ones_{N_2}$, which is multivariate normal, too:
+\[
+  (\vect f_* - m \ones_{N_2}) | \vect x , \vect y, \vect x_* \sim \mathcal{N}_{N_2}(\overline{\vect f}_*, \Cov(\vect f_*)),
+\]
+where
+\begin{equation}\label{eq:gpr_predictions}
+  \overline{\vect f}_* 
+  = \mat K(\vect x_*, \vect x)(\mat K(\vect x, \vect x) + \eta^2\mat I_{N_1})^{-1}(\vect y - m \ones_{N_1}) + m \ones_{N_2}
+\end{equation}
+and
+\[
+  \Cov(\vect f_*) = \mat K(\vect x_*, \vect x_*) - \mat K(\vect x_*, \vect x)(\mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1})^{-1}\mat K(\vect x, \vect x_*).
+\]
+Equation \ref{eq:gpr_predictions} yields the model's point predictions;
+the diagonal elements of $\Cov(\vect f_*)$ can be used to 
+construct credible intervals around these predictions.
+
+\citet[][Algorithm 2.1]{Rasmussen2006} provide an algorithm for efficiently
+estimating $\vect f_*$.
+I reproduce it here as Algorithm \vref{algo:gpr} with minor modifications.
+These modifications include implicitly incorporating the centring step,
+accommodating multiple test data points, 
+and assuming that the Cholesky decomposition follows the convention in R
+and returns an upper triangular matrix rather than a lower triangular matrix.
+
+\begin{algorithm}[tp]
+\DontPrintSemicolon
+\SetKwComment{Comment}{/* }{ */}
+\KwData{$\mat K(\vect x, \vect x) \in \R^{N_1 \times N_1}, \vect y \in \R^{N_1}, \mat K(\vect x_*, \vect x) \in \R^{N_2 \times N_1}, m \in \R, \eta^2 \geq 0$}
+\KwResult{Model predictions for $\vect x_*$}
+\texttt{GPR}($\mat K(\vect x, \vect x), \vect y, \mat K(\vect x_*, \vect x), m, \eta^2$):\;
+\Indp
+  {$\vect y \leftarrow \vect y - m \ones_{N_1}$}\;
+  {$\mat U \leftarrow \texttt{cholesky}(\mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1})$}\Comment*[r]{i.e., $\mat U\T \mat U = \mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1}$}
+  {$\vect \alpha \leftarrow \mat U \setminus (\mat U\T \setminus \vect y)$} \Comment*[r]{i.e., $\vect \alpha = (\mat K(\vect x, \vect x) + \eta^2\mat I_{N_1})^{-1}\vect y$}%\;
+  {$\overline{\vect f}_* \leftarrow \mat K(\vect x_*, \vect x) \vect \alpha + m \ones_{N_2}$}\;
+  \Return{$\overline{\vect f}_*$}
+\caption{Obtaining predicted outcomes using Gaussian process regression.}\label{algo:gpr}
+\end{algorithm}
+
+Algorithm \ref{algo:gpr} assumes that $\mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1}$ is positive-definite. 
+In practical terms, a large enough value $\eta^2$ guarantees that this is the
+case as long as $\mat K(\vect x, \vect x)$ is symmetric.
+Even if $\mat K(\vect x, \vect x)$ is positive-definite,
+slightly increasing the values on its main diagonal can help to avoid
+numerical issues with the Cholesky decomposition.
+The $\eta^2$ hyperparameter can be tuned, as explained later in this chapter.
+
+\section{Wasserstein and sliced Wasserstein kernels}\label{sec:wassersteinkernels}
+As we saw in the previous section, the covariance of a Gaussian process
+is represented by a positive-definite kernel.
+I now turn to the matter of constructing such kernels 
+based on Wasserstein and sliced Wasserstein distances.
+I restrict my attention to radial kernels, that is, kernels of the form
+\[
+  k(x, x') = \rho(d(x, x'))
+\]
+for a distance $d$ on $\mathcal{X}$
+and a suitable function $\rho : [0, \infty) \to \R$.
+
+\citet[][Proposition 4]{Bachoc2020} characterise fully the continuous functions
+$\rho : [0, \infty) \to \R$ that are suitable for constructing 
+radial positive-definite kernels, provided that $\mathcal{X}$ is 
+a Hilbert space such that $d(x, x') = \|x - x'\|_{\mathcal{X}}$.
+Here, $\| \cdot \|_{\mathcal{X}}$ is the norm induced by the inner product
+of the Hilbert space.
+In particular, the \term{power exponential function}
+\begin{equation}\label{eq:power_exponential}
+  \rho_{s^2, t, p}(r) = s^2\exp\left(-\left(\frac{r}{2t}\right)^p\right),
+\end{equation}
+where $s^2, t > 0$ and $p \in (0, 2]$, serves as a suitable function $\rho$.
+Setting $p = 2$ in Equation \ref{eq:power_exponential} yields the 
+\term{Gaussian radial basis function}.
+Another class of kernel functions is obtained by means of the
+\term{Matérn covariance function}
+\begin{equation}\label{eq:matern}
+  \rho_{s^2, t, \kappa}(r) = \frac{s^2(r/t)^{\kappa}}{2^{\kappa - 1}\Gamma(\kappa)}K_{\kappa}(r/t),
+\end{equation}
+where $s^2, t, \kappa > 0$,
+where $\Gamma$ is the Gamma function,
+and where $K_{\kappa}$ is the modified Bessel function of the second kind.
+For $\kappa = 1/2, 3/2, 5/2$, Equation \ref{eq:matern} simplifies to
+\begin{align*}
+  \rho_{s^2, t, 1/2}(r) 
+  &= s^2 \exp\left(-\frac{r}{2t}\right), \\
+  \rho_{s^2, t, 3/2}(r) 
+  &= s^2\left(1 + \frac{\sqrt{3}r}{2t}\right)\exp\left(-\frac{\sqrt{3}r}{2t}\right), \\
+  \textrm{and}~~
+  \rho_{s^2, t, 5/2}(r)
+  &= s^2\left(1 + \frac{\sqrt{5}r}{2t} + \frac{5r^2}{12t^2}\right)\exp\left(-\frac{\sqrt{5}r}{2t}\right),
+\end{align*}
+respectively.
+
+While Equations \ref{eq:power_exponential} and \ref{eq:matern} allow us to
+define radial positive-definite kernels using the induced norm on a Hilbert space,
+the space of probability distributions with finite $p$-th moment is not a Hilbert space.
+In order to use Equations \ref{eq:power_exponential} and \ref{eq:matern}
+when working with Wasserstein and sliced Wasserstein distances, then,
+we need to assess if these can be written in terms of an induced norm of a Hilbert space.
+This is where the notion of Hilbertian distances comes into play.
+
+\mypar[Hilbertian distance]{Definition}
+  Let $(\mathcal{X}, d)$ be a non-empty metric space.
+  We say that the distance $d: \mathcal{X} \times \mathcal{X} \to [0, \infty)$
+  is \term{Hilbertian} if there exists a Hilbert space $\mathcal{H}$
+  and a mapping $\phi : \mathcal{X} \to \mathcal{H}$ such that
+  \[
+    d(x, x') = \|\phi(x) - \phi(x')\|_{\mathcal{H}}
+  \]
+  for any $x, x' \in \mathcal{X}$. Here,
+  $\|\cdot\|_{\mathcal{H}} = \sqrt{\langle \cdot, \cdot \rangle_{\mathcal{H}}}$
+  is the norm induced by the inner product on $\mathcal{H}$.
+\parend
+
+The idea is that if $d(x, x') = \|\phi(x) - \phi(x')\|_{\mathcal{H}}$
+for some mapping $\phi : \mathcal{X} \to \mathcal{H}$,
+then we may define a radial kernel in terms of
+\[
+  k(x, x') = \rho(\|\phi(x) - \phi(x')\|_{\mathcal{H}})
+\]
+using any of the suitable functions $\rho$ identified by \citet{Bachoc2020}.
+
+Unfortunately, the $p$-Wasserstein distance on $\mathcal{P}_p(\R^d)$ is \emph{not}
+Hilbertian for $d \geq 2$ and $p = 1, 2$.
+\citet[][Proposition 8.2]{Peyre2019} show this by constructing a counterexample
+involving 35 mixtures of Dirac measures and demonstrating numerically that
+if the $p$-Wasserstein distance on $\mathcal{P}_p(\R^d), d \geq 2,$ were
+Hilbertian, then this would contradict a result by \citet[][Section 3]{Schoenberg1938}.
+I refrain from reproducing the counterexample here.
+I could not find proofs pertaining to $p \not \in \{1,2\}$,
+but Peyré and Cuturi's construction generated counterexamples for 
+all other (unspecified) values of $p$ in the interval $[1, 4]$ that they considered, 
+see their Figure 8.6.
+In any case, the values $p = 1, 2$ correspond
+to the most important use cases of Wasserstein distances.\footnote{Incidentally,
+\citet{Bachoc2020} constructed positive-definite kernels on $\mathcal{P}_2(\R^d), d \geq 2$,
+by means of optimal transport maps rather than by means of the Wasserstein distances themselves.}
+
+In the univariate case, however, a Hilbertian Wasserstein distance can be obtained
+as a corollary of Proposition \vref{prop:1D}.
+
+\mypar{Corollary}\label{cor:wshilbertian}
+  The $2$-Wasserstein distance is a Hilbertian distance on $\mathcal{P}_2(\R)$.
+\parend
+
+\begin{proof}
+  We denote by $L^2([0,1])$ the quotient space 
+  obtained by identifying the functions in 
+  $\{ f : [0,1] \to \R : \int_0^1 |f(t)|^2 \df t < \infty \}$
+  agreeing Lebesgue-almost everywhere.
+  When equipped with the inner product
+  \[
+    \langle f, g \rangle_{L^2([0,1])} := \int_0^1 f(t)g(t) \df t,
+  \]
+  $L^2([0,1])$ is a Hilbert space.
+  Its induced norm is
+  \[
+    \|f\|_{L^2([0,1])} = \left(\int_0^1 f^2(t) \df t\right)^{\frac{1}{2}}.
+  \]
+   We define the mapping
+  $\phi : \mathcal{P}_2(\R) \to L^2([0,1]), \mu \mapsto  F_{\mu}^{-1}(\cdot),$
+  that associates each square-integrable univariate distribution to its quantile function.
+  From Proposition \ref{prop:1D}, we now obtain
+  \[
+    \W_2(\mu, \nu)
+    = \left(\int_0^1 |\phi(\mu)(t) - \phi(\nu)(t)|^2 \df t\right)^{\frac{1}{2}}
+    = \|\phi(\mu) - \phi(\nu)\|_{L^2([0,1])}. \qedhere
+  \]
+\end{proof}
+
+\mypar{Remark}
+  In their Remark 2.30, \citet{Peyre2019} claim that the $p$-Wasserstein
+  is a Hilbertian distance on $\mathcal{P}_p(\R)$ for all $p \geq 1$.
+  Their remark hinges on the following argument:
+  \begin{quote}
+    ``[T]he Wasserstein distance is isometric to a linear space equipped with the $L^p$
+    norm [for any $p \geq 1$, JV], or, equivalently, that the Wasserstein distance
+    for measures on the real line is a Hilbertian metric.''
+  \end{quote}
+ The first part is readily seen by means of the mapping
+ $\phi : \mathcal{P}_p(\R) \to L^p([0,1]), \mu \mapsto F_{\mu}^{-1}(\cdot)$,
+ as in the corollary above.
+ But for $p \neq 2$, the $L^p$ norm may not be induced by an inner product.
+ By way of a counterexample, we define $f, g \in L^1([0,1])$
+ as the indicator functions on $[0, 1/2]$ and on $(1/2, 1]$, respectively.
+ If the $L^1$ norm were induced by an inner product, we would find
+ \[
+  \|f + g\|^2_{L^1([0,1])} + \|f - g\|^2_{L^1([0,1])} = 2\left(\|f\|^2_{L^1([0,1])} + \|g\|^2_{L^1([0,1])}\right).
+ \]
+ However,
+ \[
+  \|f + g\|^2_{L^1([0,1])} + \|f - g\|^2_{L^1([0,1])} = 2 \neq 1 = 2\left(\|f\|^2_{L^1([0,1])} + \|g\|^2_{L^1([0,1])}\right).
+ \]
+ Consequently, the equivalence that \citet{Peyre2019} rely on does not hold 
+ in general, and I will therefore not assume that
+ the $\W_p$ distance is Hilbertian on $\mathcal{P}_p(\R)$
+ for any $p \neq 2$.
+\parend
+
+Because of Corollary \ref{cor:wshilbertian}, 
+we may slot the $\W_2$ distance on $\mathcal{P}_2(\R)$ into Equations \ref{eq:power_exponential}
+and \ref{eq:matern} in order to obtain a positive-definite kernel function.
+Following \citet[][Chapter 4]{Nguyen2025}, 
+I define the Wasserstein kernel for one-dimensional probability measures with finite second moment
+specifically in terms of a Gaussian radial basis function 
+(i.e., setting $p$ in Equation \ref{eq:power_exponential} to 2).
+That said, other kernel constructions would merit systematic exploration, too.
+
+\mypar[Wasserstein kernel]{Definition}\label{def:wassersteinkernel}
+  Let $\mu, \nu \in \mathcal{P}_2(\R)$ be one-dimensional probability
+  measures with finite second moment.
+  The \term{Wasserstein kernel}
+  between $\mu$ and $\nu$ is defined as
+  \[
+    k_W(\mu, \nu) := s^2\exp\left\{-\frac{1}{2t^2}\W_2^2(\mu, \nu)\right\}
+  \]
+  for a \term{scaling factor} $s^2 > 0$
+  and a \term{length-scale parameter} $t > 0$.\footnote{The scaling factor is usually denoted $\sigma^2$ in the literature,
+  whereas the length-scale is more typically written as $\ell$ or reparametrised and written as $\gamma$.
+  All of these symbols have other roles to play in this thesis, however.}
+\parend
+
+Kernels for the multivariate case can be constructed using sliced Wasserstein
+distances thanks to the following proposition \citep[][Proposition 4.10]{Nguyen2025}.
+
+\mypar{Proposition}\label{prop:swhilbertian}
+  The sliced Wasserstein distance of order $p = 2$ is Hilbertian.
+\parend
+\begin{proof}
+  We denote by $L^2([0,1] \times \Sphere^{d-1})$ the quotient space obtained by
+  identifying the functions in
+  \[
+    \left\{f : [0,1] \times \Sphere^{d-1} \to \R : \int_{\Sphere^{d-1}} \int_0^1 f(t, \theta) \df t \df \sigma(\theta) < \infty \right\}
+  \]
+  agreeing Lebesgue-almost everywhere.
+  When equipped with the inner product
+  \[
+    \langle f, g \rangle_{L^2([0,1] \times \Sphere^{d-1})}
+    := \int_{\Sphere^{d-1}} \int_0^1 f(t, \theta) g(t, \theta) \df t \df \sigma(\theta),
+  \]
+  $L^2([0,1] \times \Sphere^{d-1})$ is a Hilbert space, with the induced norm
+  \[
+    \|f\|_{L^2([0,1] \times \Sphere^{d-1})}
+    = \left(\int_{\Sphere^{d-1}} \int_0^1 f^2(t, \theta)\df t \df \sigma(\theta)\right)^{\frac{1}{2}}
+    = \left(\E_{\vect \theta \sim \sigma}\left(\int_0^1 f^2(t, \vect \theta)\df t\right)\right)^{\frac{1}{2}}.
+  \]
+  We define the mapping $\phi : \mathcal{P}_2(\R^d) \to L^2([0,1] \times \Sphere^{d-1})$
+  through $\phi(\mu)(t, \vect \theta) = F^{-1}_{\vect \theta^{\star}_{\#} \mu}(t)$.
+  With Proposition \ref{prop:1D}, we obtain
+  \begin{align*}
+    \SW_2(\mu, \nu)
+    &= \left(\E_{\vect \theta \sim \sigma} \W_2^2(\vect \theta^{\star}_{\#} \mu, \vect \theta^{\star}_{\#} \nu)\right)^{\frac{1}{2}} \\
+    &= \left(\E_{\vect \theta \sim \sigma} \left(\int_0^1 \left|F^{-1}_{\vect \theta^{\star}_{\#} \mu}(t) - F^{-1}_{\vect \theta^{\star}_{\#} \nu}(t)\right|^2\right)\right)^{\frac{1}{2}} \\
+    &= \|\phi(\mu) - \phi(\nu)\|_{L^2([0,1] \times \Sphere^{d-1})}. \qedhere
+  \end{align*}
+\end{proof}
+
+\mypar{Remark}
+  \citet{Meunier2022} point out that the sliced Wasserstein distance of order $p = 1$
+  is not Hilbertian but prove that its square root \emph{is} a Hilbertian distance (their Proposition 6).
+  While I will follow most authors and focus on $p=2$ in the remainder,
+  Meunier et al.'s finding implies that we can slot $\sqrt{\SW_1(\cdot, \cdot)}$
+  into Equations \ref{eq:power_exponential} and \ref{eq:matern} and obtain positive-definite kernels.
+\parend
+
+Proposition \ref{prop:swhilbertian} allows us to define 
+the sliced Wasserstein kernel as follows.
+
+\mypar[Sliced Wasserstein kernel]{Definition}\label{def:slicedwassersteinkernel}
+  Let $\mu, \nu \in \mathcal{P}_2(\R^d)$ be $d$-dimensional probability
+  measures with finite second moment, $d \geq 2$.
+  The \term{sliced Wasserstein kernel}
+  between $\mu$ and $\nu$ is defined as
+  \[
+    k_{SW}(\mu, \nu) := s^2\exp\left\{-\frac{1}{2t^2}\SW_2^2(\mu, \nu)\right\}
+  \]
+  for a scaling factor $s^2 > 0$
+  and a length-scale parameter $t > 0$.
+\parend
+
+In practice, $\SW_2^2(\mu, \nu)$ is estimated by Monte Carlo samples. 
+Substituting $\SW_2^2(\mu, \nu)$ by
+$\widehat{\SW}_2^2(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)$, we obtain
+\[
+  \hat k_{SW}(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)
+  =  s^2\exp\left\{-\frac{1}{2t^2}\widehat{\SW}_2^2(\mu, \nu; \vect \theta_{1}, \dots, \vect \theta_L)\right\}.
+\]
+For fixed projection directions, $\hat k_{SW}$ is a positive-definite kernel
+in its own right.
+
+\mypar{Proposition}
+  For fixed $\vect \theta_1, \dots, \vect \theta_L$, 
+  $\hat k_{SW}(\cdot, \cdot; \vect \theta_1, \dots, \vect \theta_L)$ is a positive-definite kernel.
+\parend
+\begin{proof}
+  For $\mu, \nu \in \mathcal{P}_2(\R^d), d \geq 2,$ we see that
+  \begin{align*}
+    \hat k_{SW}(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)
+    &= s^2\exp\left\{-\frac{1}{2t^2}\widehat{\SW}_2^2(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)\right\} \\
+    &= s^2\exp\left\{-\sum_{\ell = 1}^L \frac{1}{2Lt^2}\W_2^2({\vect \theta_{\ell}}^{\star}_{\#}\mu, {\vect \theta_{\ell}}^{\star}_{\#}\nu)\right\} \\
+    &= \prod_{\ell=1}^L s^{2/L} \exp\left\{-\frac{1}{2Lt^2}\W_2^2({\vect \theta_{\ell}}^{\star}_{\#}\mu, {\vect \theta_{\ell}}^{\star}_{\#}\nu)\right\}.
+  \end{align*}
+  The terms of this product are Wasserstein kernels with length-scale $\sqrt{L}t$
+  and with scaling factor $s^{2/L}$.
+  Wasserstein kernels are positive-definite (Corollary \ref{cor:wshilbertian}),
+  and products of positive-definite kernels are themselves
+  positive-definite kernels (Lemma \ref{lemma:spsd}).
+\end{proof}
+
+However, as \citet{Nguyen2025} points out,
+$\hat k_{SW}(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)$ is a biased estimator
+of $k_{SW}(\mu, \nu)$: By Jensen's inequality,
+if $\Var_{\vect \theta \sim \sigma}\left(\W_2^2(\vect \theta^{\star}_{\#}\mu, \vect \theta^{\star}_{\#}\nu)\right) > 0$,
+\[
+  \E\left(\exp\left\{-\frac{1}{2t^2}\widehat{\SW}_2^2(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)\right\}\right)
+  > \exp\left\{-\frac{1}{2t^2}\E\left(\widehat{\SW}_2^2(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)\right)\right\},
+\]
+where the right-hand side equals $k_{SW}(\mu, \nu)$ with scaling factor $s^2 = 1$.
+\citet{Nguyen2025} therefore defines the unbiased sliced Wasserstein kernel.
+
+\mypar[Unbiased sliced Wasserstein kernel]{Definition}
+  Let $\mu, \nu \in \mathcal{P}_2(\R^d)$ be $d$-dimensional probability
+  measures with finite second moment, $d \geq 2$.
+  The \term{unbiased sliced Wasserstein kernel}
+  between $\mu$ and $\nu$ is defined as
+  \[
+    k_{USW}(\mu, \nu) 
+    := s^2\E_{\vect \theta \sim \sigma} \left(\exp\left\{-\frac{1}{2t^2}\W_2^2(\vect \theta^{\star}_{\#}\mu, \vect \theta^{\star}_{\#}\nu)\right\}\right)
+  \]
+  for a scaling factor $s^2 > 0$
+  and a length-scale parameter $t > 0$.
+\parend
+
+The unbiased sliced Wasserstein kernel is positive-definite \citep[][Proposition 4.11]{Nguyen2025}
+and can be estimated in an unbiased way via Monte Carlo approximation:
+\[\label{eq:kusw}
+  \hat k_{USW}(\mu, \nu; \vect \theta_1,\dots,\vect \theta_L)
+  = \frac{s^2}{L}\sum_{\ell = 1}^L \exp\left\{-\frac{1}{2t^2}\W_2^2({\vect \theta_{\ell}^{\star}}_{\#}\mu, {\vect \theta_{\ell}^{\star}}_{\#}\nu)\right\},
+\]
+for independent $\vect \theta_1, \dots, \vect \theta_L \sim \sigma$.
+
+To my knowledge, no study has carried out a direct comparison of the
+relative merits of $\hat k_{SW}$ and $\hat k_{USW}$ in terms of their
+usefulness for predictive modelling.
+In terms of computational demands, $\hat k_{USW}$ is necessarily somewhat
+more expensive to compute than $\hat k_{SW}$ as it requires evaluating
+$L$ exponentials as opposed to merely one for each pair of distributions.
+More importantly, additional computational challenges arise when the application
+involves learning suitable values for $s^2$ and $t$ from the data.
+For $\hat k_{USW}$, the kernel matrix must be reconstructed repeatedly 
+during hyperparameter optimisation, 
+and each reconstruction requires access to all $L$ projected squared-distance 
+matrices.
+By contrast, tuning $s^2$ and $t$ for $\hat k_{SW}$
+only depends on the single averaged squared-distance matrix, which is
+considerably cheaper to reuse in both time and memory.
+In my own attempts, I was not able to accelerate the computation of 
+$\hat k_{USW}$ sufficiently to make it a viable candidate for hyperparameter tuning.
+I leave a focused comparison of $\hat k_{SW}$ and $\hat k_{USW}$ to future work.
+
+Given a number of positive-definite kernels, 
+Lemma \ref{lemma:spsd} allows us to construct new kernels,
+for instance through summation.
+
+\mypar[Sum of Wasserstein kernels]{Definition}\label{def:sumofkernels}
+  Given two $d$-dimensional probability measures $\mu, \nu$
+  and a set of vectors $\vect \theta_1, \dots, \vect \theta_L \in \R^d$,
+  we can construct the Wasserstein kernels
+  \[
+    k_W^{(\ell)}({\vect \theta_{\ell}}_{\#}^{\star}\mu, {\vect \theta_{\ell}}_{\#}^{\star}\nu)
+    = s^2_{\ell}\exp\left\{-\frac{1}{2t_{\ell}^2} 
+      \W_2^2({\vect \theta_{\ell}}_{\#}^{\star}\mu, {\vect \theta_{\ell}}_{\#}^{\star}\nu)\right\},
+  \]
+  $\ell = 1, \dots, L$.
+  We define the function
+  \[
+    k(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L) 
+    := \sum_{\ell=1}^L k_W^{(\ell)}({\vect \theta_{\ell}}_{\#}^{\star}\mu, {\vect \theta_{\ell}}_{\#}^{\star}\nu)
+  \]
+  with hyperparameters $t_1, \dots, t_L, s^2_1, \dots, s^2_L > 0$,
+  which is a positive-definite kernel in its own right.
+\parend
+
+\section{Hyperparameter tuning}\label{sec:tuning}
+When fitting a Gaussian process model using
+a (sliced) Wasserstein kernel,
+we need to decide on the values of at least three hyperparameters:
+\begin{itemize}
+  \item the length-scale parameter $t > 0$ used 
+  in the exponential;
+  \item the scaling factor $s^2 > 0$;
+  \item and the noise variance parameter $\eta^2 > 0$ added to the main diagonal of $\mat K(\vect x, \vect x)$.
+\end{itemize}
+
+While it is possible to use cross-validation techniques 
+when tuning these hyperparameters, 
+an attractive feature of Gaussian process models is that the likelihood
+of the training data $\bm y$ given the predictor data $\vect x$ and the hyperparameters
+$\vect \phi = (t, s^2, \eta^2)\T$ has a closed form.
+Specifically, the \term{negative log-marginal likelihood} (\textsc{nll}) of a Gaussian process 
+model is 
+\begin{equation}\label{eq:nll}
+  -\log p(\vect  {\tilde y} | \vect x, \vect \phi) 
+  = \frac{\vect  {\tilde y}\T \vect \alpha}{2} + \sum_{i=1}^{N_1} \log U_{ii} + \frac{N_1 \log(2\pi)}{2},
+\end{equation}
+where 
+$\vect  {\tilde y}$ is the possibly centred version of the outcome vector $\vect y$,
+$\mat U$ is the upper triangular matrix resulting from the Cholesky decomposition of
+$\mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1}$,
+and
+\[
+  \vect \alpha = (\mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1})^{-1} \vect  {\tilde y} = \mat U \setminus (\mat U\T \setminus \vect  {\tilde y}).
+\]
+This result is derived in Chapter 2 in \citet[][see their Equation 2.30]{Rasmussen2006}.
+The expression is obtained by marginalising over the unknown values of $\vect f_*$,
+hence its name.
+
+To find the hyperparameter values minimising the \textsc{nll},
+I use the Broyden--Fletcher--Goldfarb--Shanno (\textsc{bfgs}) algorithm \citep[see][Chapter 6]{Nocedal2006}.
+While this algorithm can estimate gradients on the fly using the finite-differences method,
+the gradient of the \textsc{nll} with respect to $\vect \phi$ is not too arduous
+to compute explicitly.
+In order to enforce positive hyperparameter values, I optimise 
+the \textsc{nll} with respect to $\log(t), \log(s^2)$ and $\log(\eta^2)$
+instead of with respect to $t, s^2$ and $\eta^2$ directly.
+
+From \citet[][Equation 5.9]{Rasmussen2006}, we obtain the $k$-th partial derivative
+of the \textsc{nll} as
+\[
+  -\frac{\partial}{\partial \phi_k} \log p(\vect  {\tilde y} | \vect x, \vect \phi)
+    = -\frac{1}{2}\Tr\left((\vect \alpha \vect \alpha\T - \mat K^{-1})\frac{\partial \mat K}{\partial \phi_k}\right),
+\]
+where
+\[
+  \mat K = \mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1}
+\]
+and
+\[
+  \vect \alpha = \mat K^{-1} \vect  {\tilde y}.
+\]
+It remains to compute $\partial \mat K / \partial \phi_k$ for $k = 1, 2, 3$.
+Writing $d^2(x_i, x_j)$ for the squared distance between
+the input objects $x_i$ and $x_j$,
+the partial derivative for the log length-scale parameter is
+\begin{align*}
+  \left(\frac{\partial \mat K}{\partial \log t}\right)_{ij}
+  &=\frac{\partial}{\partial \log(t)}\left(s^2\exp\left\{-\frac{d^2(x_i, x_j)}{2\exp(2\log(t))}\right\} + \eta^2[i = j]\right) \\
+  &= \frac{s^2d^2(x_i, x_j)}{t^2}\exp\left\{-\frac{d^2(x_i, x_j)}{2t^2}\right\}.
+\end{align*}
+For the log scaling factor, we obtain
+\begin{align*}
+  \left(\frac{\partial \mat K}{\partial \log s^2 }\right)_{ij}
+  &= \frac{\partial}{\partial \log(s^2)} \left(\exp(\log(s^2))\exp\left\{-\frac{d^2(x_i, x_j)}{2t^2}\right\} + \eta^2[i = j]\right) \\
+  &= s^2\exp\left\{-\frac{d^2(x_i, x_j)}{2t^2}\right\}.
+\end{align*}
+For the noise variance parameter, finally, we get
+\begin{align*}
+  \left(\frac{\partial \mat K}{\partial \log \eta^2 }\right)_{ij}
+  &= \frac{\partial}{\partial \log(\eta^2)} \left(s^2\exp\left\{-\frac{d^2(x_i, x_j)}{2t^2}\right\} + \exp(\log\eta^2)[i = j]\right) \\
+  &= \eta^2[i = j].
+\end{align*}
+
+
+For the initialisation, I generated independent starting parameter values as follows:
+\begin{align*}
+  \log(t)        &\sim \textrm{Uniform}(\log (0.1 \cdot \textrm{MedDist}), \log (10 \cdot \textrm{MedDist})), \\
+  \log(s^2) &\sim \textrm{Uniform}(\log 0.1, \log 10), \\
+  \log(\eta^2)&\sim \textrm{Uniform}(-10, -2),
+\end{align*}
+where
+\[
+  \textrm{MedDist} = \textrm{median}(d(x_i, x_j))_{1 \leq i < j \leq N_1}.
+\]
+To prevent the \textsc{bfgs} algorithm from being stuck near a local minimum,
+the search can be run from multiple independent starting points.
+
+\mypar[Hyperparameter tuning for sums of kernels]{Remark}\label{remark:sumofkernels_hyperparameters}
+  In Definition \ref{def:sumofkernels}, I introduced a kernel defined as the sum
+  of $L$ Wasserstein kernels:
+  \[
+    k(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L) 
+    = \sum_{\ell=1}^L k_W^{(\ell)}({\vect \theta_{\ell}}_{\#}^{\star}\mu, {\vect \theta_{\ell}}_{\#}^{\star}\nu)
+  \]
+  with hyperparameters $t_1, \dots, t_L, s^2_1, \dots, s^2_L > 0$.
+  Adding the noise variance parameter from the Gaussian process model, 
+  this yields $2L + 1$ hyperparameters that can be tuned in the same fashion as 
+  in the single-kernel case discussed above, albeit at greater computational expense.
+  Specifically, the partial derivative of $K_{ij}$ with respect to
+  $\log t_\ell$ is
+  \begin{align*}
+    \left(\frac{\partial \mat K}{\partial \log t_{\ell}}\right)_{ij}
+    &= \frac{s_{\ell}^2d_{\ell}^2(x_i, x_j)}{t_{\ell}^2}
+        \exp\left\{-\frac{d_{\ell}^2(x_i, x_j)}{2t_{\ell}^2}\right\},
+  \end{align*}
+  and the partial derivative of $K_{ij}$ with respect to $\log s_{\ell}^2$ is
+  \begin{align*}
+    \left(\frac{\partial \mat K}{\partial \log s_{\ell}^2 }\right)_{ij}
+    &= s_{\ell}^2\exp\left\{-\frac{d_{\ell}^2(x_i, x_j)}{2t_{\ell}^2}\right\},
+  \end{align*}
+  where $d_{\ell}^2(x_i, x_j)$ denotes the squared distance between
+  the $\ell$-th projections of $x_i$ and $x_j$, $\ell = 1, \dots, L$.
+  The partial derivative of $K_{ij}$ with respect to $\log \eta^2$ is the same
+  as before, $\eta^2[i = j]$.
+\parend
