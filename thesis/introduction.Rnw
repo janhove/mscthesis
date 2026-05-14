@@ -192,7 +192,7 @@ we define the map
    \vect u^{\star}:         \R^d  &\to      \R, \\
   \vect x = (x_1, \dots, x_d)\T   &\mapsto  \langle \vect u, \vect x \rangle = \sum_{i=1}^d u_ix_i.
 \end{align*}
-The associated pushforward operator $(\vect u^{\star})_{\#}$
+The associated push-forward operator $(\vect u^{\star})_{\#}$
 is also written more compactly as $\vect u^{\star}_{\#}$.
 
 For a random variable $X \sim \mu$ on $\R$, its distribution function is the map
@@ -238,6 +238,7 @@ that I use the terms \textit{distance} and \textit{metric} interchangeably.
     \item $d(x, y) = d(y, x)$, that is, $d$ is symmetric;
     \item $d(x, z) \leq d(x, y) + d(y, z)$, that is, $d$ obeys the triangle inequality. \parend
   \end{enumerate}
+
 
 \section{Software and code availability}
 I carried out all computations in R \citep{R} and wrote my own functions
