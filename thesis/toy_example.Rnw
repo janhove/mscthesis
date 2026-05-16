@@ -1,0 +1,439 @@
+\chapter{A toy example}\label{ch:toyexample}
+Chapter \ref{ch:wasserstein} introduced Wasserstein and sliced Wasserstein distances.
+Chapter \ref{ch:gpr} showed how kernels can be derived from these distances
+and explained how these kernels can be used in predictive
+modelling, specifically in Gaussian process regression.
+In this chapter, I illustrate how these tools can be put into practice.
+I do so by means of a toy example constructed specially to demonstrate
+the usefulness of sliced Wasserstein kernels in a situation where both
+standard vector-based approaches and Wasserstein kernels fail abjectly.
+
+\section{Set-up}
+\paragraph{Input distributions.}
+For each $a > 0$, we define the bivariate Gaussian mixture distribution
+\[
+  P(a) := \frac{1}{4}\sum_{i=1}^4 \mathcal{N}_2(\vect \mu_i, \mat I_2),
+\]
+where
+\[
+  \vect \mu_1 = \begin{pmatrix}a \\ 0\end{pmatrix},
+  ~~~ \vect \mu_2 = \begin{pmatrix}0 \\ a\end{pmatrix},
+  ~~~ \vect \mu_3 = -\vect \mu_1,
+  ~~~ \vect \mu_4 = -\vect \mu_2.
+\]
+For each $\omega \in \R$, we further define
+\[
+  P(a, \omega) := \mathcal{L}(\mat R(\omega)\vect X),
+\]
+where 
+\[
+  \mat R(\omega) = \begin{pmatrix}\cos \omega & - \sin \omega \\ \sin \omega & \cos \omega\end{pmatrix}
+\]
+and $\vect X \sim P(a)$.
+That is, $P(a, \omega)$ takes the Gaussian mixture $P(a)$
+and rotates it counterclockwise by an angle of $\omega$;
+see Figure \vref{fig:toyexample}.
+For $\vect Z \sim \mathcal{N}_2(\vect \mu_i, \mat I_2)$,
+the random vector $\mat R(\pi/2) \vect Z$ has the distribution
+$\mathcal{N}_2(\vect \mu_{i + 1 \mod 4}, \mat I_2), i = 1, \dots, 4$.
+The angle $\pi/2$ is the smallest positive angle for which this is true.
+As a result, the period of $\omega \mapsto P(a, \omega)$ is $\pi/2$.
+
+
+<<echo=FALSE, fig.align = "center", fig.height = 3.5, out.width = "\\textwidth", fig.cap = "For this toy example, the data are generated from Gaussian mixture distributions whose components are laid out symmetrically around the origin. The $a$ parameter (here $a = 5$) governs the distance of the component centroids from the origin; the $\\omega$ parameter ($\\omega = \\pi/3$ in the right panel) determines the rotation applied to the unrotated mixture $P(a, 0)$. The ellipses represent 95\\% probability contours of each mixture component, the centroids of which are marked by crosses.\\label{fig:toyexample}", message = FALSE, warning = FALSE>>=
+library(ellipse)
+
+a <- 5
+Sigma <- diag(0.8, 2)
+mus_base <- cbind(c(a, 0), c(0, a), c(-a, 0), c(0, -a))
+cols <- c("#1b9e77", "#d95f02", "#7570b3", "#e7298a")
+
+rotate <- function(angle) {
+  rbind(c(cos(angle), -sin(angle)),
+        c(sin(angle),  cos(angle)))
+}
+
+plot_ellipses <- function(angle, title, show_arrow = FALSE) {
+  R <- rotate(angle)
+  mus <- t(R %*% mus_base)
+  Sigma_rot <- R %*% Sigma %*% t(R)
+  
+  plot(NULL, asp = 1, xlim = c(-8, 8), ylim = c(-8, 8),
+       xlab = expression(x[1]), ylab = expression(x[2]),
+       main = title)
+  abline(h = 0, v = 0, col = "grey85", lty = 2)
+  
+  for (i in 1:4) {
+    e <- ellipse(Sigma_rot, centre = mus[i, ], level = 0.95)
+    polygon(e, col = adjustcolor(cols[i], alpha.f = 0.2),
+            border = cols[i], lwd = 1.5)
+    points(mus[i, 1], mus[i, 2], pch = 3, col = cols[i], cex = 1.2, lwd = 2)
+  }
+  
+  if (show_arrow) {
+    # Draw arc around origin from angle 0 to pi/3, at radius r
+    r <- a
+    arc_angles <- seq(0, angle, length.out = 100)
+    arc_x <- r * cos(arc_angles)
+    arc_y <- r * sin(arc_angles)
+    lines(arc_x, arc_y, col = "grey30", lwd = 1.5)
+    
+    # Arrowhead at the end of the arc
+    end_angle <- angle
+    tip_x <- r * cos(end_angle)
+    tip_y <- r * sin(end_angle)
+    # Direction tangent to arc at end
+    tan_x <- -sin(end_angle)
+    tan_y <-  cos(end_angle)
+    arr_len <- 0.4
+    arrows(
+      tip_x - arr_len * tan_x,
+      tip_y - arr_len * tan_y,
+      tip_x, tip_y,
+      length = 0.12, angle = 20,
+      col = "grey30", lwd = 1.5
+    )
+  
+    # Label: place it just outside the arc, at the midpoint angle
+    mid_angle <- angle/2
+    label_r <- r + 0.7
+    text(label_r * cos(mid_angle), label_r * sin(mid_angle),
+         labels = expression(omega == pi/3),
+         col = "grey30", cex = 0.95, adj = c(0, 0.5))
+  }
+}
+
+par(mfrow = c(1, 2), mar = c(4, 4, 3, 1), las = 1,
+    bty = "n")
+plot_ellipses(0,    expression(paste(P(5, 0))))
+plot_ellipses(pi/3, expression(paste(P(5, pi/3))),
+              show_arrow = TRUE)
+@
+
+For any $a, \omega$, 
+the expectation of $\vect X \sim P(a, \omega)$ is the zero vector in $\R^2$.
+Further, the distribution $P(a, 0)$ is symmetrical about both cardinal axes.
+Hence, for $\vect X = (X_1, X_2) \sim P(a, 0)$,
+\[
+  (X_1, X_2) \eqd (X_1, -X_2),
+\]
+so
+\[
+  \Cov(X_1, X_2) = \Cov(X_1, -X_2) = -\Cov(X_1, X_2),
+\]
+which means that $\Cov(\vect X)$ is diagonal.
+Since the first and second component are exchangeable, the diagonal entries
+of the covariance matrix are identical.
+Along one axis, 
+the variance of the mixture is the sum of within- and between-cluster variances, 
+i.e., $a^2 + 1$.
+Hence, the covariance matrix of $P(a, 0)$ is $(a^2 + 1)\mat I_2$.
+The covariance matrix of $P(a, \omega)$ has the same form:
+\[
+  \mat R(\omega) (a^2 + 1)\mat I_2 \mat R(\omega)\T = (a^2 + 1) \mat R(\omega) \mat R(\omega)\T= (a^2 + 1)\mat I_2.
+\]
+The first and second moments of $P(a, \omega)$, then, do not depend on $\omega$,
+and the first moment does not depend on $a$, either.
+Consequently, any vector-based model that uses these moments
+will not be useful for predicting the rotation angle $\omega$ in test data.
+
+Let us now turn our attention to the marginal distributions of $(X_1, X_2) \sim P(a, \pi/4 + \omega)$.
+The projection of the first mixture component onto the $x$-axis is a normal distribution
+with expectation $a \cos (\pi/4 + \omega)$ and unit variance;
+the projection of the fourth mixture component onto the $x$-axis is again normal with unit variance,
+but with expectation $a \sin (\pi/4 + \omega)$.
+By symmetry, we find that the distribution of $X_1$ is
+\begin{align*}
+  \mathcal{L}(X_1) &= \frac{1}{4}
+    \Bigl(
+      \mathcal{N}(a \cos (\pi/4 + \omega), 1) +
+      \mathcal{N}(-a \sin (\pi/4 + \omega), 1) + \\
+      & ~~~~~~~~~~~~~~ \mathcal{N}(-a \cos (\pi/4 + \omega), 1) +
+      \mathcal{N}(a \sin (\pi/4 + \omega), 1)
+    \Bigl).
+\end{align*}
+Similarly, for $(Y_1, Y_2) \sim P(a, \pi/4 -\omega)$,
+we obtain
+\begin{align*}
+  \mathcal{L}(Y_1) 
+  &= \frac{1}{4}
+    \Bigl(
+      \mathcal{N}(a \cos (\pi/4 - \omega), 1) +
+      \mathcal{N}(-a \sin (\pi/4 - \omega), 1) + \\
+      & ~~~~~~~~~~~~~~ \mathcal{N}(-a \cos (\pi/4 - \omega), 1) +
+      \mathcal{N}(a \sin (\pi/4 - \omega), 1)
+    \Bigl) \\
+  &= \frac{1}{4}
+    \Bigl(
+      \mathcal{N}(a \sin (\pi/4 + \omega), 1) +
+      \mathcal{N}(-a \cos (\pi/4 + \omega), 1) + \\
+      & ~~~~~~~~~~~~~~ \mathcal{N}(-a \sin (\pi/4 + \omega), 1) + 
+      \mathcal{N}(-a \cos (\pi/4 + \omega), 1)
+    \Bigl) \\
+  &= \mathcal{L}(X_1).
+\end{align*}
+By the same token, $\mathcal{L}(X_2) = \mathcal{L}(Y_2)$.
+Thus, any method relying solely on the marginal distributions of the
+input distributions will not be able to tell
+$P(a, \pi/4 + \omega)$ and $P(a, \pi/4 - \omega)$ apart.
+
+\paragraph{Scenarios.}
+We consider an artificial setting in which we observe
+empirical distributions $\widehat P_1, \dots,$ $\widehat P_{N_1+N_2}$
+obtained from simple random samples from the distributions
+$P(a, \omega_1), \dots, P(a, \omega_{N_1+N_2})$.
+The rotation angles $\omega_{1}, \dots, \omega_{N_1}$ with which the training data
+were generated are known; 
+the objective is to retrieve the values of $\omega_{N_1+1}, \dots, \omega_{N_1 + N_2}$
+that were used to generate the test set, which are unknown.
+Each sample contains the same number of observations, $n$.
+
+The utility of sliced Wasserstein kernels will be illustrated in two scenarios.
+\begin{itemize}
+  \item In Scenario 1, the rotation angles are drawn independently 
+  from a uniform distribution over the interval $(0, \pi/4)$.
+  Over this interval, the images of $\cos$ and $\sin$ do not overlap.
+  As a result, 
+  the mappings from the rotation angle to the marginal distributions of $P(a, \omega)$
+  are injective over this fairly narrow interval,
+  and Wasserstein kernels are expected to perform relatively well.
+
+  \item In Scenario 2, the rotation angles are drawn from a uniform distribution 
+  over the interval $(0, \pi/2)$.
+  While the mapping $\omega \mapsto P(a, \omega)$ is injective over this wider interval,
+  the mappings from the rotation angle to the marginal distributions of $P(a, \omega)$ are not.
+  Consequently, Wasserstein kernels are expected to show degraded performance,
+  whereas sliced Wasserstein kernels, which take into account the whole distribution,
+  are still expected to retain some predictive power.
+\end{itemize}
+
+In both scenarios, I set $a = 5, N_1 = N_2 = 50$ and $n = 200$.
+The values of $\omega_1, \dots, \omega_{N_1 + N_2}$ were sampled independently
+from $\textrm{Uniform}(0, \pi/4)$ (Scenario 1) and $\textrm{Uniform}(0, \pi/2)$ (Scenario 2).
+For both scenarios, twenty independent realisations of
+the rotation angles and the corresponding samples are generated.
+Each of the resulting twenty data sets per scenario is analysed independently of the others.
+
+\section{Method of analysis}
+For each of the twenty data sets per scenario,
+the closeness of the predicted outcomes $\widehat \omega_{N_1 + 1}, \dots,$ 
+$\widehat \omega_{N_1 + N_2}$ 
+to the test data $\omega_{N_1 + 1}, \dots, \omega_{N_1 + N_2}$  is assessed 
+quantitatively by means of the root mean squared error (\textsc{rmse})
+\[
+  \textsc{rmse}
+  := \sqrt{\frac{1}{N_2}\sum_{i = N_1 + 1}^{N_1 + N_2} (\widehat \omega_i - \omega_i)^2}.
+\]
+The range of the outcomes varies between the two scenarios.
+In order to present the results in a more directly comparable fashion,
+an $R^2$ value is computed as
+\[
+  R^2
+  := 1 - \frac{\sum_{i = N_1 + 1}^{N_1 + N_2} (\widehat \omega_i - \omega_i)^2}{\sum_{i = N_1 + 1}^{N_1 + N_2} (\overline \omega - \omega_i)^2},
+\]
+where $\overline \omega = N_1^{-1}\sum_{j=1}^{N_1} \omega_j$ is the mean outcome in the training data.
+Higher $R^2$ values correspond to greater predictive accuracy.
+This definition allows $R^2$ to be negative when the predictions
+are worse than when simply using the training set mean.
+
+\paragraph{Baselines.} 
+A reference baseline is established by setting 
+$\widehat \omega_i$ to $\overline \omega = N_1^{-1}\sum_{j=1}^{N_1} \omega_j$,
+the mean outcome in the training set, $i = N_1+1,\dots, N_1+N_2$.
+By definition, the $R^2$ value for this reference baseline is $0$.
+
+While we have established that there is no signal of the outcome
+in the means and covariances of the input distributions,
+I nonetheless applied a vector-based method to this regression problem
+in which each input distribution was summarised by 
+the sample means and sample covariances of its first and second dimensions
+as well as by the Pearson correlation between its first and second dimensions.
+For each distribution, this five-dimensional vector was used as a predictor
+in a random forest model \citep[see][]{Breiman2001}.
+This model's \texttt{mtry} hyperparameter was tuned by minimising 
+the out-of-bag mean squared error over the set $\{1, \dots, 5\}$.
+The \texttt{ntree} hyperparameter, 
+which rarely substantially affects the performance of random forests, was set to 500.
+
+\paragraph{Wasserstein kernels.} 
+Next, a number of Gaussian process models were fitted to the data.
+The first two of these models were based on Wasserstein kernels 
+(see Definition \vref{def:wassersteinkernel})
+for which the inputs were the first and second marginals
+of the empirical distributions.
+That is, for each pair of empirical input distributions 
+$\widehat P(a, \omega_i), \widehat P(a, \omega_j)$,
+I computed
+\[
+  k_W({\vect e_1}_{\#}^{\star}\widehat P(a, \omega_i), {\vect e_1}_{\#}^{\star}\widehat P(a, \omega_j))
+\]
+and
+\[
+  k_W({\vect e_2}_{\#}^{\star}\widehat P(a, \omega_i), {\vect e_2}_{\#}^{\star}\widehat P(a, \omega_j)),
+\]
+where $\vect e_1 = (1, 0)\T$ and $\vect e_2 = (0, 1)\T$.
+
+The hyperparameters $s^2, t$ and $\eta^2$ were tuned by
+minimising the negative log-marginal likelihood using the 
+\textsc{bfgs} algorithm as described in Section \ref{sec:tuning}.
+The hyperparameter search was initialised ten different times in order to
+prevent the optimisation algorithm from being stuck near a local minimum.
+
+\paragraph{Sum of Wasserstein kernels.} 
+For each pair of empirical input distributions $\widehat P(a, \omega_i), \widehat P(a, \omega_j)$,
+I computed the kernel value
+\[
+  k(\widehat P(a, \omega_i), \widehat P(a, \omega_j); \vect e_1, \vect e_2),
+\]
+see Definition \vref{def:sumofkernels}.
+This kernel combines the information from both marginals into a single kernel, 
+potentially allowing the model to use both projection directions simultaneously.
+The kernel was used in another Gaussian process model,
+whose hyperparameters $s^2_1, s^2_2, t_1, t_2$ and $\eta^2$ were
+tuned as explained in Remark \ref{remark:sumofkernels_hyperparameters}.
+
+\paragraph{Sliced Wasserstein kernel.} 
+Finally, a Gaussian process model using the sliced Wasserstein kernel 
+(Definition \vref{def:slicedwassersteinkernel}) was fitted to the data.
+This kernel was estimated using Monte Carlo simulation based
+on $L = 50$ projection directions sampled i.i.d.\ from a uniform distribution
+over $\Sphere^1$.
+For each of the twenty data sets, the projection directions were sampled anew.
+The hyperparameters $s^2, t$ and $\eta^2$ were again tuned
+by minimising the negative log-marginal likelihood, and, again,
+the \textsc{bfgs} algorithm was initialised ten different times for each 
+hyperparameter search.
+
+\section{Results}
+Table \ref{tab:results_toyexample1} and Figure \ref{fig:results_toyexample1}
+show the \textsc{rmse} values achieved by each modelling approach
+in the scenario in which the rotation angles were sampled from a uniform
+distribution over the interval $(0, \pi/4)$.
+As expected, the three Wasserstein kernels substantially outperform both the naïve
+baseline and the random forest baseline.
+However, they are themselves outperformed by the sliced Wasserstein kernel.
+This suggests that the sliced Wasserstein kernel picks up on, and is able to leverage,
+discriminatory information that is not contained in the input distributions' marginals.
+
+\begin{figure}
+\centering
+\includegraphics[width = 0.8\textwidth]{figures/toy_example45_rmse}
+\caption{The root mean squared errors obtained by each prediction model
+for the twenty runs of the toy example in the first scenario (rotation angle drawn from $\textrm{Uniform}(0, \pi/4)$).}
+\label{fig:results_toyexample1}
+\end{figure}
+
+\begin{table}[]
+\centering
+\caption{The root mean squared error obtained by different prediction models over twenty runs of the toy example in the first scenario (rotation angle drawn from $\textrm{Uniform}(0, \pi/4)$).}
+\label{tab:results_toyexample1}
+\begin{tabular}{l r r}
+\toprule
+Method of analysis
+& \multicolumn{1}{r}{Mean}
+& \multicolumn{1}{r}{Standard deviation} \\
+\midrule
+Baseline: Training set mean           & 0.221 & 0.017 \\
+Baseline: Random forest               & 0.214 & 0.018 \\
+Wasserstein kernel: first dimension   & 0.048 & 0.008 \\
+Wasserstein kernel: second dimension  & 0.049 & 0.007 \\
+Sum of Wasserstein kernels            & 0.044 & 0.007 \\
+Sliced Wasserstein kernel             & 0.033 & 0.007 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In the second scenario, in which the rotation angles are drawn from
+a uniform distribution over the interval $(0, \pi/2)$,
+the advantage of the sliced Wasserstein kernel relative to the other approaches
+is even more pronounced, as expected; 
+see  Table \ref{tab:results_toyexample2} and Figure \ref{fig:results_toyexample2}.
+Indeed, the three Wasserstein kernels do not outperform the baselines.
+The sliced Wasserstein kernel, by contrast, 
+is clearly able to pick up on some signal in the input distributions that is
+not restricted to the marginals.
+
+\begin{figure}
+\centering
+\includegraphics[width = 0.8\textwidth]{figures/toy_example90_rmse}
+\caption{The root mean squared errors obtained by each prediction model
+for the twenty runs of the toy example in the second scenario (rotation angles drawn from $\textrm{Uniform}(0, \pi/2)$).}
+\label{fig:results_toyexample2}
+\end{figure}
+
+\begin{table}[]
+\centering
+\caption{The root mean squared error obtained by different prediction models over twenty runs of the toy example in the second scenario (rotation angles drawn from $\textrm{Uniform}(0, \pi/2)$).}
+\label{tab:results_toyexample2}
+\begin{tabular}{l r r}
+\toprule
+Method of analysis
+& \multicolumn{1}{r}{Mean}
+& \multicolumn{1}{r}{Standard deviation} \\
+\midrule
+Baseline: Training set mean           & 0.451 & 0.032 \\
+Baseline: Random forest               & 0.455 & 0.045 \\
+Wasserstein kernel: first dimension   & 0.463 & 0.037 \\
+Wasserstein kernel: second dimension  & 0.451 & 0.033 \\
+Sum of Wasserstein kernels            & 0.463 & 0.037 \\
+Sliced Wasserstein kernel             & 0.229 & 0.041 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The $R^2$ values, shown in 
+Table \ref{tab:results_toyexampleR2} and Figure \ref{fig:results_toyexampleR2},
+tell the same story:
+in Scenario 1, the Wasserstein kernels substantially outperform their baselines
+but they are narrowly outperformed by the sliced Wasserstein kernel;
+in Scenario 2, the Wasserstein kernels cannot be used to reliably predict the
+outcome, whereas the sliced Wasserstein kernel does a reasonable job,
+achieving a mean $R^2$ of $0.74$.
+
+\begin{figure}
+\centering
+\includegraphics[width = 0.8\textwidth]{figures/toy_exampleR2}
+\caption{The $R^2$ values obtained by each predictive model for the twenty runs of the toy example.}
+\label{fig:results_toyexampleR2}
+\end{figure}
+
+{
+\sisetup{
+  separate-uncertainty = true,
+  table-align-uncertainty = true,
+  output-product = {\!\pm\!}
+}
+\begin{table}[]
+\centering
+\caption{The mean and standard deviation of the $R^2$ values obtained by different prediction models over twenty runs of the toy example.}
+\label{tab:results_toyexampleR2}
+\begin{tabular}{l S[table-format=1.3(1)] S[table-format=1.3(1)]}
+\toprule
+Method of analysis
+& \multicolumn{1}{c}{Scenario 1} & \multicolumn{1}{c}{Scenario 2} \\
+\midrule
+Baseline: Random forest               & 0.06(15)  & -0.02(11) \\
+Wasserstein kernel: first dimension   & 0.95(01)  & -0.05(09) \\
+Wasserstein kernel: second dimension  & 0.95(01)  &  0.00(03) \\
+Sum of Wasserstein kernels            & 0.96(01)  &  -0.05(09) \\
+Sliced Wasserstein kernel             & 0.98(01)  & 0.74(08) \\
+\bottomrule
+\end{tabular}
+\end{table}
+}
+
+\section{Conclusion}
+The results presented in the previous section demonstrate
+that sliced Wasserstein kernels can perform well where vector-based methods
+and kernels based on marginal distributions struggle.
+The toy example, of course, was constructed specially for this purpose.
+However, the performance of any kernel-based method is likely to depend on 
+how the input distributions are scaled and oriented in the ambient space.
+Unlike in the present toy example, then, a real-life application of 
+Wasserstein and sliced Wasserstein kernels will likely involve some 
+preprocessing of the input distributions in order 
+to find a suitable scaling and orientation.
+In order to provide a theoretical basis for some of the preprocessing choices
+that naturally arise in practice, the following chapter 
+studies the effect of global affine transformations of the input distribution
+on sliced Wasserstein distances and the resultant kernels.
