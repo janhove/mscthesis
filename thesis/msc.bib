@@ -1,3 +1,13 @@
+@Article{Bachoc2020,
+  author  = {François Bachoc and Alexandra Suvorikova and David Ginsbourger and Jean-Michel Loubes and Vladimir Spokoiny},
+  journal = {Electronic Journal of Statistics},
+  title   = {Gaussian process with multidimensional distribution inputs via optimal transport and {H}ilbertian embedding},
+  year    = {2020},
+  pages   = {2742-2772},
+  volume  = {14},
+  doi     = {10.1214/20-EJS1725},
+}
+
 @PhdThesis{Bonnotte2013,
   author = {Nicolas Bonnotte},
   school = {Université Paris Sud - Paris XI; Scuola normale superiore (Pisa)},
@@ -5,6 +15,18 @@
   year   = {2013},
   url    = {https://theses.hal.science/tel-00946781v1},
 }
+
+@Article{Breiman2001,
+  author  = {Leo Breiman},
+  journal = {Machine Learning},
+  title   = {Random forests},
+  year    = {2001},
+  number  = {1},
+  pages   = {5-32},
+  volume  = {45},
+  doi     = {10.1023/A:1010933404324},
+}
+
 
 @Article{CarpinteroPerez2024,
   author   = {Raphaël {Carpintero Perez} and Sébastien {Da Veiga} and Josselin Garnier and Brian Staber},
@@ -35,6 +57,28 @@
   doi      = {10.1016/0047-259X(82)90077-X},
 }
 
+@Article{Eckermann2021,
+  author  = {Marina Eckermann and Bernhard Schmitzer and Franziska van der Meer and Jonas Franz and Ove Hansen and Christine Stadelmann and Tim Salditt},
+  journal = {PNAS},
+  title   = {Three-dimensional virtual histology of the human hippocampus based on phase-contrast computed tomography},
+  year    = {2021},
+  number  = {48},
+  pages   = {e2113835118},
+  volume  = {118},
+  doi     = {10.1073/pnas.2113835118},
+}
+
+@Article{Kessy2018,
+  author  = {Agnan Kessy and Alex Lewin and Korbinian Strimmer},
+  journal = {The American Statistician},
+  title   = {Optimal whitening and decorrelation},
+  year    = {2018},
+  number  = {4},
+  pages   = {309-314},
+  volume  = {72},
+  doi     = {10.1080/00031305.2016.1277159},
+}
+
 @Article{Klein2024,
   author  = {Nadja Klein},
   journal = {Annual Review of Statistics and Its Application},
@@ -43,6 +87,26 @@
   pages   = {321-346},
   volume  = {11},
   doi     = {10.1146/annurev-statistics-040722-053607},
+}
+
+@Article{Marples2024,
+  author   = {Callum Robert Marples and Philip Michael Williams},
+  journal  = {Numerical Algorithms},
+  title    = {Patch area and uniform sampling on the surface of any ellipsoid},
+  year     = {2024},
+  pages    = {1801-1827},
+  volume   = {95},
+  abstract = {Algorithms for generating uniform random points on a triaxial ellipsoid are non-trivial to verify because of the non-analytical form of the surface area. In this paper, a formula for the surface area of an ellipsoidal patch is derived in the form of a one-dimensional numerical integration problem, where the integrand is expressed using elliptic integrals. In addition, analytical formulae were obtained for the special case of a spheroid. The triaxial ellipsoid formula was used to calculate patch areas to investigate a set of surface sampling algorithms. Particular attention was paid to the efficiency of these methods. The results of this investigation show that the most efficient algorithm depends on the required coordinate system. For Cartesian coordinates, the gradient rejection sampling algorithm of Chen and Glotzer is best suited to this task, when paired with Marsaglia’s method for generating points on a unit sphere. For outputs in polar coordinates, it was found that a surface area rejection sampler is preferable.},
+  doi      = {10.1007/s11075-023-01628-4},
+}
+
+@Article{Meunier2022,
+  author  = {Dimitri Meunier and Massimiliano Pontil and Carlo Ciliberto},
+  journal = {Proceedings of Machine Learning Research},
+  title   = {Distribution regression with sliced {W}asserstein kernels},
+  year    = {2022},
+  pages   = {15501-15523},
+  volume  = {162},
 }
 
 @PhdThesis{Nadjahi2021,
@@ -59,6 +123,25 @@
   year   = {2025},
   doi    = {10.48550/arXiv.2508.12519},
   eprint = {2508.12519},
+}
+
+@Book{Nocedal2006,
+  author    = {Jorge Nocedal and Stephen J. Wright},
+  publisher = {Springer},
+  title     = {Numerical optimization},
+  year      = {2006},
+  edition   = {2},
+  doi       = {doi.org/10.1007/978-0-387-40065-5},
+}
+
+@Article{Peyre2019,
+  author  = {Gabriel Peyré and Marco Cuturi},
+  journal = {Foundations and Trends in Machine Learning},
+  title   = {Computational optimal transport with applications to data sciences},
+  year    = {2019},
+  pages   = {355-607},
+  volume  = {11},
+  doi     = {10.1561/2200000073},
 }
 
 @Article{Poczos2013,
@@ -84,13 +167,13 @@
   booktitle = {Scale Space and Variational Methods in Computer Vision},
   title     = {Wasserstein barycenter and its application to texture mixing},
   year      = {2012},
+  editor    = {Alfred M. Bruckstein and Bart M. {ter Haar Romeny} and Alexander M. Bronstein and Michael M. Bronstein},
   pages     = {435-446},
   abstract  = {This paper proposes a new definition of the averaging of discrete probability distributions as a barycenter over the Monge-Kantorovich optimal transport space. To overcome the time complexity involved by the numerical solving of such problem, the original Wasserstein metric is replaced by a sliced approximation over 1D distributions. This enables us to introduce a new fast gradient descent algorithm to compute Wasserstein barycenters of point clouds.
 
 This new notion of barycenter of probabilities is likely to find applications in computer vision where one wants to average features defined as distributions. We show an application to texture synthesis and mixing, where a texture is characterized by the distribution of the response to a multi-scale oriented filter bank. This leads to a simple way to navigate over a convex domain of color textures.},
   doi       = {10.1007/978-3-642-24785-9_37},
 }
-
 
 @Book{Rachev1998,
   author    = {Svetlozar T. Rachev and Ludger Rüschendorf},
@@ -100,12 +183,40 @@ This new notion of barycenter of probabilities is likely to find applications in
   doi       = {10.1007/b98893},
 }
 
+@Book{Rasmussen2006,
+  author    = {Carl Edward Rasmussen and Christopher K. I. Williams},
+  publisher = {MIT Press},
+  title     = {Gaussian processes for machine learning},
+  year      = {2006},
+  doi       = {10.7551/mitpress/3206.001.0001},
+}
+
 @Misc{Riesen2025,
   author       = {Kaspar Riesen},
   howpublished = {Lecture notes, University of Bern},
   note         = {version 3.0},
   title        = {Graph-based pattern recognition},
   year         = {2025},
+}
+
+@Article{Schoenberg1938,
+  author  = {Isaac Jacob Schoenberg},
+  journal = {Transactions of the American Mathematical Society},
+  title   = {Metric spaces and positive definite functions},
+  year    = {1938},
+  number  = {3},
+  pages   = {522-536},
+  volume  = {44},
+  doi     = {10.1090/S0002-9947-1938-1501980-0},
+}
+
+@Manual{whitening,
+  title  = {whitening: Whitening and High-Dimensional Canonical Correlation Analysis},
+  author = {Korbinian Strimmer and Takoua Jendoubi and Agnan Kessy and Alex Lewin},
+  note   = {R package version 1.4.0},
+  year   = {2022},
+  doi    = {10.32614/CRAN.package.whitening},
+  url    = {https://CRAN.R-project.org/package=whitening},
 }
 
 @Book{Villani2009,
