@@ -398,7 +398,7 @@ between these sorted vectors for $1 \leq i < j \leq N$ and $\ell = 1, \dots, L$.
 In practice, the first term will often be dwarfed by the other two.
 \parend
 
-\mypar[On reweighting directions]{Remark}
+\mypar[On reweighting directions]{Remark}\label{remark:importancesampling}
 Given independent $\vect Z_1, \dots, \vect Z_{L} \sim \mathcal{N}_{d}(\vect 0, \mat I_d)$,
 the squared sliced Wasserstein distance $\SW_2^2(\mat M_i, \mat M_j)$ may be estimated
 as
@@ -1095,3 +1095,4 @@ kernels based on Wasserstein distances along the cardinal directions
 can match or outperform sliced Wasserstein kernels.
 The real-data example corroborated this finding, 
 which motivates the use of such kernels as a benchmark in future work.
+
