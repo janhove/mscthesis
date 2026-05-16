@@ -1,0 +1,1097 @@
+\chapter{Effects of global affine transformations}\label{ch:affine}
+The previous chapter illustrated the sliced Wasserstein--Gaussian process regression
+workflow as well as its potential usefulness for tackling regression problems
+in which the inputs are probability distributions.
+The toy example used, however, was deliberately artificial, 
+which allowed me to disregard the difficulties that analysts are likely
+to face in real-life applications.
+
+One source of difficulty is that the variables that make up the
+input distributions are typically measured in arbitrary units.
+For example, if the input distributions consists of measurements of body 
+heights and masses, the sliced Wasserstein distances between two distributions
+will depend on whether the heights are expressed in metres, centimetres
+or inches and on whether the masses are expressed in kilograms or pounds.
+Rescaling a single variable can drastically alter the pairwise sliced Wasserstein
+distances, which in turn may affect the performance of the prediction model downstream.
+Indeed, the asymptotic analyses in this chapter will show that such rescaling
+may render the resulting kernel matrix degenerate.
+
+A popular approach for dealing with arbitrary measurement units
+is to centre and scale each input distribution
+using pooled estimates of the variables' means and standard deviations.
+That is, if $\mat M_i$ is the $n_i \times d$ matrix representing the $i$-th
+input distribution, we compute
+\[
+  \widetilde{\mat M_i} = (\mat M_i - \ones_{n_i} \widehat{\vect \mu}\T)\begin{pmatrix}\widehat \sigma_1^{-1} & & \\ & \ddots & \\ & & \widehat \sigma_d^{-1} \end{pmatrix},
+\]
+where $\widehat{\vect \mu} \in \R^d$ is a pooled estimate of the mean
+and where $\widehat \sigma_1, \dots, \widehat \sigma_d$ are pooled estimates
+of the standard deviations.
+
+An alternative approach is to `whiten' the input distributions.
+The goal of whitening is to transform the input in such a way
+that the pooled sample covariance matrix of the transformed input is the
+identity matrix.
+In our context, this amounts to computing
+\[
+  \widetilde{\mat M_i} = \mat M_i \mat W.
+\]
+Here, $\mat W \in \R^{d \times d}$ is a matrix such that $\mat W\widehat{\mat \Sigma} \mat W\T = \mat I_d$,
+where $\widehat{\mat \Sigma}$ is a pooled estimate of the covariance matrix
+of the input distributions.
+Equivalently, $\mat W$ has the property that $\mat W\T \mat W = \widehat{\mat \Sigma}^{-1}$.
+An infinite number of matrices $\mat W$ fulfilling this criterion exist for 
+any given estimated covariance matrix, 
+but a handful of procedures for constructing one are used in practice.
+These include Mahalanobis (or ZCA) whitening, Cholesky whitening, and PCA whitening
+\citep[see][for an overview]{Kessy2018}.
+I will discuss these different whitening techniques in more detail later.
+
+Both scaling and whitening are instances of a global affine transformation:
+the same transformation is applied to every input distribution,
+as opposed to applying different transformations to different input
+distributions.
+Such latter (local) transformations may nonetheless be useful.
+For instance, it is conceivable that analysts would want to isolate
+shape differences between the input distributions 
+from location and scale differences.
+Scaling and centring each distribution separately prior to computing
+the distances would accomplish this.
+The goal of this chapter, however, is to better understand the effects of
+such global affine transformations on sliced Wasserstein distances
+and the kernels derived from them.
+It will show that such transformations amount to a distortion of the measure
+on the unit sphere and will derive the Radon--Nikodym derivative of this distortion.
+The theoretical findings are illustrated by means of simulations 
+in which the degree of anisotropy of the transformation matrix is varied systematically.
+The chapter ends with a real-data example that demonstrates the effects of
+global scaling and whitening in a less artificial setting.
+
+\section{Theoretical considerations}
+Let $P, Q \in \mathcal{P}_2(\R^d), d \geq 1,$ and let $\vect X \sim P, \vect Y \sim Q$.
+Further let $\mat A \in \textrm{GL}_d(\R)$ be an invertible matrix and $\vect b \in \R^{d}$ a translation vector.
+For $\vect \theta \in \R^d$, we have
+\[
+  \langle \mat A \vect X + \vect b, \vect \theta \rangle = \langle \vect X, \mat A\T \vect \theta \rangle + \langle \vect b, \vect \theta \rangle.
+\]
+Consequently,
+the squared sliced Wasserstein distance of order 2 between the distributions of $\mat A \vect X + \vect b$ and $\mat A\vect Y + \vect b$ is
+\begin{align*}
+  \SW_2^2(\mat A\vect X + \vect b, \mat A\vect Y + \vect b)
+  &= \int \W_2^2(\langle \mat A\vect X + \vect b, \theta \rangle, \langle \mat A \vect Y + \vect b, \theta \rangle) \df \sigma(\theta) \\
+  &= \int \W_2^2(\langle \vect X, \mat A\T \theta \rangle + \langle \vect b, \theta \rangle, \langle \vect Y, \mat A\T \theta \rangle + \langle \vect b, \theta \rangle) \df \sigma(\theta).
+\end {align*}
+Since the Wasserstein distance is translation-invariant (see Lemma \vref{lemma:wassersteinproperties}), 
+this simplifies to
+\begin{equation}\label{eq:pushforward}
+   \SW_2^2(\mat A\vect X + \vect b, \mat A\vect Y + \vect b) = \int \W_2^2(\langle \vect X, \mat A\T \theta \rangle, \langle \vect Y, \mat A\T \theta \rangle) \df \sigma(\theta) = \SW_2^2(\mat A\vect X, \mat A\vect Y).
+\end{equation}
+
+\mypar[Change of measure]{Remark}
+By definition,
+\[
+  \SW_2^2(\vect X, \vect Y) = \int \W_2^2(\langle \vect X, \theta \rangle, \langle \vect Y, \theta \rangle) \df \sigma(\theta).
+\]
+Comparing this expression to Equation \ref{eq:pushforward},
+we observe that
+\[
+  \SW_2^2(\mat A \vect X + \vect b, \mat A \vect Y + \vect b) = \int \W_2^2(\langle \vect X, \theta \rangle, \langle \vect Y, \theta \rangle) \df \sigma_{\mat A}(\theta),
+\]
+with $\sigma_{\mat A}$ the pushforward measure of $\sigma$ under the mapping $\R^d \ni \vect v \mapsto  \mat A\T \vect v \in \R^d$.
+Global affine transformations, then, act on sliced Wasserstein distances solely
+through a distortion of the measure on $\Sphere^{d-1}$.
+\parend
+
+To better characterise this change of measure, we write
+$\SW_2^2(\vect X, \vect Y)$ and $\SW_2^2(\mat A\vect X, \mat A\vect Y)$ as integrals with respect to the Lebesgue measure.
+For $\vect Z \sim \mathcal{N}_d(\vect 0, \mat I_d)$, 
+we have $\Prob(\|Z\| = 0) = 0$ and 
+it holds that $\vect Z/\|\vect Z\| \sim \textrm{Uniform}(\Sphere^{d-1})$.
+Hence,
+\begin{align*}
+ \SW_2^2(\vect X, \vect Y)
+ &= \int_{\R^d} \W_2^2(\langle \vect X, z/\|z\| \rangle, \langle \vect Y, z/\|z\| \rangle) \varphi(z) \df z,
+\end{align*}
+where $\varphi : \R^d \to (0, \infty), \vect z \mapsto (2\pi)^{-d/2}\exp\left(-\|\vect z\|^2 / 2\right),$
+is the canonical Lebesgue density of the $d$-variate standard normal distribution.
+Similarly, and after using the homogeneity property
+of the Wasserstein distance (Lemma \ref{lemma:wassersteinproperties}), we see that
+\begin{align*}
+  \SW_2^2(\mat A\vect X, \mat A\vect Y)
+  &= \int_{\R^d} \W_2^2(\langle \mat A\vect X, z/\|z\| \rangle, \langle \mat A\vect Y, z/\|z\| \rangle) \varphi(z) \df z \\
+  &= \int_{\R^d} \W_2^2(\langle \vect X, \mat A\T z \rangle, \langle \vect Y, \mat A\T z \rangle) \frac{\varphi(z)}{\|z\|^2} \df z.
+\end{align*}
+Via a change of variable $\tilde{\vect z} = \mat A\T \vect z$ and after renaming and using the homogeneity property once more, 
+we obtain
+\begin{align*}
+  \SW_2^2(\mat A\vect X, \mat A\vect Y)
+  &= \int_{\R^d} \W_2^2(\langle \vect X, \tilde z \rangle, \langle \vect Y, \tilde z \rangle) \frac{\varphi(\mat A\invT \tilde z)}{\|\mat A\invT \tilde z\|^2 |\det \mat A|} \df \tilde z \\
+  &= \int_{\R^d} \W_2^2(\langle \mat X, z/\|z\| \rangle, \langle \mat Y, z/\|z\| \rangle) \frac{\|z\|^2}{\|\mat A\invT z\|^2}\frac{\varphi(\mat A\invT  z)}{|\det \mat A|} \df z.
+\end{align*}
+
+Hence, computing $\SW_2^2(\mat A\vect X, \mat A \vect Y)$, like computing $\SW_2^2(\vect X, \vect Y)$, amounts to integrating
+\[
+  \W^2_2(\langle \vect X, z/\|z\| \rangle, \langle \vect Y, z/\|z\| \rangle)
+\]
+over $z$, but with respect to the measure $\mu_{\mat A}$ that has the Lebesgue density
+\[
+  \df \mu_{\mat A}(z) = \frac{\|z\|^2}{\|\mat A\invT z\|^2}\frac{\varphi(\mat A\invT  z)}{|\det \mat A|} \df z
+\]
+instead of with respect to the measure $\mu$ that has the Lebesgue density
+\[
+  \df \mu(z) = \varphi(z) \df z.
+\]
+
+\mypar[Radon--Nikodym derivative]{Remark}
+From the considerations above, we see that the Radon--Nikodym derivative of $\mu_{\mat A}$ with respect to $\mu$ is
+\begin{align*}
+  \frac{\df \mu_{\mat A}}{\df \mu}(\vect z)
+  &= \frac{\|\vect z\|^2}{\|\mat A\invT \vect z\|^2}\frac{\varphi(\mat A\invT \vect z)}{|\det \mat A| \varphi(\vect z)} \\
+  &= \frac{\|\vect z\|^2}{\vect z\T (\mat A\T \mat A)^{-1} \vect z} \frac{1}{|\det \mat A|}\exp\left\{\frac{1}{2}\left(\vect z\T \left(\mat I_d - (\mat A\T \mat A)^{-1}\right) \vect z\right)\right\}. \parendeq
+\end{align*}
+
+\mypar[Only $\mat A\T \mat A$ matters]{Remark}
+We can write 
+\[
+  |\det \mat A| = \sqrt{|\det \mat A||\det \mat A|} = \sqrt{|\det \mat A\T||\det \mat A|} = \sqrt{|\det \mat A\T \mat A|}.
+\]
+This shows that the 
+Radon--Nikodym derivative obtained in the previous remark depends only on $\mat A\T \mat A$, 
+not on $\mat A$ itself.
+In particular, when whitening the input distributions
+using a matrix $\mat W$ with $\mat W\T \mat W = \widehat{\mat \Sigma}^{-1}$,
+the precise whitening procedure (e.g., Mahalanobis, PCA, Cholesky)
+does not affect the resulting sliced Wasserstein distances.\footnote{But it \emph{does}
+affect Wasserstein distances of the form 
+$\W_2(\langle \vect X, \vect \theta \rangle, \langle \vect Y, \vect \theta \rangle)$ for $\vect \theta \in \R^d$.
+As we will see in the real-data example at the end of this chapter,
+the choice of the whitening procedure can very much affect the 
+performance of the downstream prediction model if Wasserstein kernels are used.}
+
+More generally, consider a singular value decomposition $\mat A = \mat U_{\textrm{SVD}}\mat \Sigma_{\textrm{SVD}} \mat V_{\textrm{SVD}}\T$.
+Then $\mat A\T \mat A$ has the eigenvalue decomposition $\mat A\T \mat A = \mat V_{\textrm{SVD}} \mat \Sigma_{\textrm{SVD}}^2 \mat V_{\textrm{SVD}}\T$,
+with $\mat V_{\textrm{SVD}}$ an orthogonal matrix and $\mat \Sigma_{\textrm{SVD}}^2$ a diagonal matrix
+with the eigenvalues of $\mat A\T \mat A$ on its main diagonal.
+The left singular vectors in $\mat U_{\textrm{SVD}}$, then, are irrelevant for the sliced Wasserstein distance
+computation: for fixed $\mat \Sigma_{\textrm{SVD}}, \mat V_{\textrm{SVD}}$, 
+any orthogonal $\mat U_{\textrm{SVD}}$ will result in the same distances.
+So we may assume that $\mat A = \mat \Sigma_{\textrm{SVD}} \mat V_{\textrm{SVD}}\T$,
+where $\mat \Sigma_{\textrm{SVD}}$ governs the degree of anisotropy of $\sigma_{\mat A}$
+and $\mat V_{\textrm{SVD}}\T$ the orientation.
+\parend
+
+\section{Geometrical interpretation}
+Consider the eigenvalue decomposition $\mat A\T \mat A = \mat Q\mat \Lambda \mat Q\T$, where
+$\mat \Lambda = \textrm{diag}(\lambda_1, \dots, \lambda_d)$.
+Then
+\[
+  \vect z\T(\mat A\T \mat A)^{-1}\vect z = (\mat Q\T \vect z)\T \mat \Lambda^{-1}(\mat Q\T \vect z) = \sum_{i=1}^d \lambda_i^{-1} (\mat Q\T \vect z)^2_i.
+\]
+Further note that
+$$(\det \mat A)^2 = \det (\mat A\T \mat A) = \prod_{i=1}^d \lambda_i,$$
+so
+$$1/|\det \mat A| = \prod_{i=1}^d \sqrt{\lambda_i^{-1}}.$$
+The Radon--Nikodym derivative of $\mu_{\mat A}$ with respect to $\mu$ can thus be written as
+\begin{align*}
+  \frac{\df \mu_{\mat A}}{\df \mu}(\vect z)
+  &= \|\vect z\|^2 \frac{\prod_{i=1}^d \sqrt{\lambda_i^{-1}}}{\sum_{i=1}^d \lambda_i^{-1} (\mat Q\T \vect z)^2_i}
+  \exp\left\{\frac{1}{2}\sum_{i=1}^d(1-\lambda_i^{-1}) (\mat Q\T \vect z)^2_i\right\}.
+\end{align*}
+Write $\tilde{\vect z} = \mat Q\T \vect z$, that is, express $\vect z$ in terms of an orthonormal eigenbasis of $\mat A\T \mat A$.
+Then
+\begin{align*}
+  \frac{\df \mu_{\mat A}}{\df \mu}(\tilde{\vect z})
+  &= \|\tilde{\vect z}\|^2 \frac{\prod_{i=1}^d \sqrt{\lambda_i^{-1}}}{\sum_{i=1}^d \lambda_i^{-1} \tilde z^2_i}
+  \exp\left\{\frac{1}{2}\sum_{i=1}^d(1-\lambda_i^{-1}) \tilde z^2_i\right\}.
+\end{align*}
+To appreciate the geometrical meaning of this,
+let us consider $\lambda_i = 1$ for $i = 2, \dots, d$.
+Then, for $\mat Q = (\vect q_1, \dots, \vect q_d)$,
+\[
+  \frac{\df \mu_{\mat A}}{\df \mu}(\vect q_1)
+  = \sqrt{\lambda_1}\exp\left\{\frac{1 - 1/\lambda_1}{2}\right\}
+\]
+and
+\[
+  \frac{\df \mu_{\mat A}}{\df \mu}(\vect q_i)
+  = \frac{1}{\sqrt{\lambda_1}},
+\]
+$i = 2, \dots, d$.
+Hence, for $\lambda_1 = 1$,
+\[
+  \frac{\df \mu_{\mat A}}{\df \mu}(\vect q_1) = \frac{\df \mu_{\mat A}}{\df \mu}(\vect q_i) = 1;
+\]
+for $\lambda_1 > 1$,
+\[
+  \frac{\df \mu_{\mat A}}{\df \mu}(\vect q_1) > \sqrt{\lambda_1} > 1 ~~ \textrm{and} ~~ \frac{\df \mu_{\mat A}}{\df \mu}(\vect q_i) < 1;
+\]
+and for $\lambda_1 < 1$,
+\[
+  \frac{\df \mu_{\mat A}}{\df \mu}(\vect q_1) < \sqrt{\lambda_1} < 1 ~~ \textrm{and} ~~ \frac{\df \mu_{\mat A}}{\df \mu}(\vect q_i) > 1.
+\]
+So, relative to the isotropic measure $\mu$, the measure $\mu_{\mat A}$ assigns more weight to the directions
+aligned with eigenvectors $\vect q_i$ for which $\lambda_i > 1$
+and less weight to the directions aligned with eigenvectors $\vect q_i$ for which $\lambda_i < 1$.
+
+\mypar{Remark}
+  For $\mat A \in \textrm{GL}_d(\R)$, 
+  the set
+  \[
+    \set E_{\mat A} := \{\mat A\T \vect \theta : \vect \theta \in \Sphere^{d-1}\}
+  \]
+  is the surface of an ellipsoid in $\R^d$.
+  However, while $\sigma$ is the uniform distribution on $\Sphere^{d-1}$,
+  the pushforward measure $\sigma_{\mat A}$ is not the uniform distribution 
+  on $\set E_{\mat A}$.
+  This is illustrated for the two-dimensional case in Figure \ref{fig:ellipse},
+  for $\mat A = \begin{pmatrix} 2 & 1 \\ 1/2 & 1 \end{pmatrix}$.
+  The left panel shows 36 equally spaced points on the unit sphere,
+  the arc segment between each neighbouring pair having probability $1/36$ under $\sigma$.
+  The map $\vect \theta \mapsto \mat A\T \vect \theta$ sends these points to 
+  $\set E_{\mat A}$, with the arc segments between consecutive points on the
+  ellipse also having probability $1/36$ under $\sigma_{\mat A}$.
+  Clearly, the image points are not equally spaced along the ellipse:
+  they cluster more tightly near directions aligned with
+  the eigenvectors of $\mat A\T \mat A$ that have eigenvalues greater than
+  1 (i.e., along the elongated elliptical axis) and are more spread out
+  near directions aligned with eigenvectors with small eigenvalues
+  (i.e., along the compressed elliptical axis).
+  
+  For comparison,
+  the right panel shows what the uniform distribution on $\set E_{\mat A}$
+  looks like. The 36 points on the ellipse are equally spaced along the ellipse,
+  with each arc segment between neighbouring points having probability $1/36$
+  under $\textrm{Uniform}(\set E_{\mat A})$.
+  Mapping these points to the unit sphere via the map
+  $\vect \theta \mapsto \mat A\invT \vect \theta$,
+  we can see that resulting distribution
+  concentrates more probability mass near directions aligned with eigenvectors
+  with small eigenvalues than does $\sigma_{\mat A}$.
+  
+  Spelling out precisely how $\sigma_{\mat A}$ relates to the uniform
+  distribution on $\set E_{\mat A}$ by means of a Radon--Nikodym derivative
+  would require computing surface integrals of $\set E_{\mat A}$.
+  This is non-trivial even for $d = 2, 3$.
+  I refer the interested reader to \citet{Marples2024} for some results
+  that may prove useful for the three-dimensional case.
+\parend
+
+<<echo=FALSE, fig.align = "center", fig.height = 3.5, out.width = "\\textwidth", fig.cap = "The pushforward measure $\\sigma_{\\mat A}$ is not the uniform distribution on an ellipse. \\textit{Left:} The uniform distribution on the sphere pushed forward to the ellipse using the map $\\vect \\theta \\mapsto \\mat A\\T \\vect \\theta$. \\textit{Right:} The uniform distribution on the ellipse pushed forward to the sphere using the map $\\vect \\theta \\mapsto \\mat A\\invT \\vect \\theta$. In this example, $\\mat A = \\begin{pmatrix} 2 & 1 \\\\ 1/2 & 1 \\end{pmatrix}$.\\label{fig:ellipse}", message = FALSE, warning = FALSE>>=
+n <- 360
+A <- rbind(c(2, 1), c(1/2, 1))
+
+# Equally-spaced angles on circle
+angle <- seq(0, 2*pi, length.out = n + 1)[-(n+1)]
+thetas <- cbind(cos(angle), sin(angle))
+ellipse_pts <- thetas %*% A
+
+# Fine grid for arc length computation
+phi_fine <- seq(0, 2*pi, length.out = 10001)
+ellipse_fine <- cbind(cos(phi_fine), sin(phi_fine)) %*% A
+dx <- diff(ellipse_fine[, 1])
+dy <- diff(ellipse_fine[, 2])
+arc_elements <- c(0, sqrt(dx^2 + dy^2))
+cum_arc <- cumsum(arc_elements)
+cum_arc <- cum_arc / max(cum_arc)
+
+# Arc-length-uniform points on ellipse
+target <- seq(0, 1, length.out = n + 1)[-(n+1)]
+phi_uniform <- approx(cum_arc, phi_fine, xout = target)$y
+thetas_uniform <- cbind(cos(phi_uniform), sin(phi_uniform)) %*% A
+
+# Project back to circle
+A_invT <- solve(t(A))
+back_projected <- thetas_uniform %*% t(A_invT)
+
+# Plot
+idx <- seq(1, n, 10)
+op <- par(no.readonly = TRUE)
+par(bty = "n", mar = c(1, 1, 3, 1), pty = "s",
+    mfrow = c(1, 2))
+
+plot(ellipse_pts, type = "l", asp = 1,
+     xlab = "", ylab = "", axes = FALSE,
+     main = "Sphere to ellipse")
+lines(thetas)
+segments(x0 = thetas[idx, 1],         x1 = ellipse_pts[idx, 1],
+         y0 = thetas[idx, 2],         y1 = ellipse_pts[idx, 2],
+         col = adjustcolor("grey40", alpha.f = 0.6))
+points(thetas[idx, ],         pch = 21, bg = NA, col = "black", cex = 0.8)
+points(ellipse_pts[idx, ],    pch = 21, bg = "grey40", col = "black", cex = 0.8)
+# svd_A <- svd(A)
+# arrows(x0 = 0, y0 = 0, x1 = svd_A$v[1, 1] * svd_A$d[1], y1 = svd_A$v[1, 2] * svd_A$d[1])
+# arrows(x0 = 0, y0 = 0, x1 = svd_A$v[2, 1] * svd_A$d[2], y1 = svd_A$v[2, 2] * svd_A$d[2])
+
+plot(ellipse_pts, type = "l", asp = 1,
+     xlab = "", ylab = "", axes = FALSE,
+     main = "Ellipse to sphere")
+lines(thetas)
+segments(x0 = back_projected[idx, 1], x1 = thetas_uniform[idx, 1],
+         y0 = back_projected[idx, 2], y1 = thetas_uniform[idx, 2],
+         col = adjustcolor("grey40", alpha.f = 0.6))
+points(back_projected[idx, ], pch = 21, bg = "grey40", col = "black", cex = 0.8)
+points(thetas_uniform[idx, ], pch = 21, bg = NA, col = "black", cex = 0.8)
+par(op)
+@
+
+
+\section{Computational consequences}
+Equation \vref{eq:pushforward} reveals two ways in which
+the computation of sliced Wasserstein distances between distributions subjected
+to a global affine transformation may be simplified.
+
+\mypar[Translations are unnecessary]{Remark}
+If researchers want to scale, whiten or otherwise reshape
+the input distributions by means of a global bijective affine transformation,
+Equation \ref{eq:pushforward} shows that it is not necessary to
+carry out the translation step:
+The sliced 2-Wasserstein distance between the distributions
+of $\mat A(\vect X - \vect v)$ and $\mat A(\vect Y - \vect v)$
+is the same as the one between the distributions of
+$\mat A\vect X$ and $\mat A\vect Y$, for any matrix $\mat A$ 
+of full rank and any vector $\vect v \in \R^d$.
+This shaves off an admittedly cheap step from each transformation.
+\parend
+
+\mypar[Time complexity of Monte Carlo simulations]{Remark}\label{remark:speedup}
+Let $\mat M_1, \dots, \mat M_N \in \R^{n \times d}$ be matrices representing
+the empirical input distributions.
+We wish to use Monte Carlo simulation to estimate the pairwise sliced Wasserstein distances between
+these distributions after subjecting them to a global affine transformation.
+To this end, we may compute
+\[
+\widehat{\SW}_2^2(\mat M_i \mat A, \mat M_j \mat A; \vect \theta_1, \dots, \vect \theta_L) 
+= \frac{1}{L}\sum_{\ell = 1}^L\W_2^2(\langle \mat M_i \mat A, \vect \theta_{\ell}\rangle, \langle \mat M_j \mat A, \vect \theta_{\ell}\rangle)
+\]
+with stochastically independent $\vect \theta_1, \dots, \vect \theta_L \sim \textrm{Uniform}(\Sphere^{d-1})$ for some integer $L$.
+This is equivalent to computing
+\[
+\frac{1}{L}\sum_{\ell = 1}^L\W_2^2(\langle \mat M_i, \mat A\T \vect \theta_{\ell}\rangle, \langle \mat M_j, \mat A\T \vect \theta_{\ell}\rangle).
+\]
+
+The time complexity of computing $\langle \mat M_i\mat A, \vect \theta_{\ell}\rangle$ for $i = 1, \dots, N$, $\ell = 1, \dots, L,$
+that is, of first transforming the matrices and then computing the projections, is in $\mathcal{O}(Nnd^2 + NnLd)$:
+Each of the $N$ matrix multiplications is in $\mathcal{O}(nd^2)$,
+and each of the $N$ times $L$ matrix-by-vector multiplications is in $\mathcal{O}(nd)$.
+By contrast, the time complexity of computing $\langle \mat M_i, \mat A\T\vect \theta_{\ell}\rangle$,
+$i = 1, \dots, N,$ $\ell = 1, \dots, L,$
+that is, of first transforming the projection directions rather than the matrices,
+is in $\mathcal{O}(Ld^2 + NnLd)$:
+For each projection direction, computing $\mat A\T \vect \theta_{\ell}$ is in $\mathcal{O}(d^2)$,
+and each of the $N$ times $L$ matrix-by-vector multiplications is still in $\mathcal{O}(nd)$.
+
+Hence, if $L$ is small relative to $Nn$,
+applying the transformation to the projection directions instead of to
+the data matrices may speed up computations somewhat.
+In typical applications $L \ll Nn$, so transforming the projection directions
+rather than the input distributions is almost always preferable.
+That said, after implementing this suggestion,
+the overall time complexity for computing $\widehat{\SW}_2^2(\mat M_i \mat A, \mat M_j \mat A; \vect \theta_1, \dots, \vect \theta_L)$ for all $i < j$ is in
+\[
+  \mathcal{O}(Ld^2 + L d N n \log n + L N^2 n),
+\]
+where the second term is due to computing and then sorting
+$\langle \mat M_i, \mat A\T \vect \theta_{\ell}\rangle \in \R^n$ for $i = 1, \dots, N$, $\ell = 1, \dots, L$,
+and the third term is due to computing the sum of the squared element-wise differences
+between these sorted vectors for $1 \leq i < j \leq N$ and $\ell = 1, \dots, L$.
+In practice, the first term will often be dwarfed by the other two.
+\parend
+
+\mypar[On reweighting directions]{Remark}
+Given independent $\vect Z_1, \dots, \vect Z_{L} \sim \mathcal{N}_{d}(\vect 0, \mat I_d)$,
+the squared sliced Wasserstein distance $\SW_2^2(\mat M_i, \mat M_j)$ may be estimated
+as
+\[
+  \frac{1}{L}\sum_{\ell = 1}^L \W_2^2(\langle \mat M_i, \vect Z_{\ell}/\|\vect Z_{\ell}\|\rangle, \langle \mat M_j, \vect Z_{\ell}/\|\vect Z_{\ell}\|\rangle).
+\]
+If the realisations of $(\vect Z_{\ell})_{\ell=1}^L$ as well as the distances
+$(\W_2^2(\langle \mat M_i, \vect Z_{\ell}/\|\vect Z_{\ell}\|\rangle, \langle \mat M_j, \vect Z_{\ell}/\|\vect Z_{\ell}\|\rangle))_{\ell=1}^{L}$ are kept available,
+the theoretical considerations suggest that they may be reused to more quickly estimate
+$\SW_2^2(\mat M_i \mat A, \mat M_j \mat A)$ for any $\mat A \in \textrm{GL}_d(\R)$ by means of importance sampling using the Radon--Nikodym derivative:
+\[
+  \frac{1}{L}\sum_{\ell = 1}^L \W_2^2(\langle \mat M_i, \vect Z_{\ell}/\|\vect Z_{\ell}|\rangle, \langle \mat M_j, \vect Z_{\ell}/\|\vect Z_{\ell}\|\rangle) \frac{\df \mu_{\mat A}}{\df \mu}(\vect Z_{\ell}).
+\]
+
+However, preliminary attempts failed due to numerical issues and an often
+dramatic reduction of the effective sample size.
+I therefore leave a more systematic exploration of this topic as an avenue
+for future work.
+\parend
+
+\section{Consequences for kernel learning}
+We have seen that transforming the input distributions by a global affine bijection
+corresponds to a change of measure in the sliced Wasserstein computations.
+We now consider the effects of this action on the downstream task of 
+constructing a kernel from the resulting sliced Wasserstein distances. 
+To this end, assume that we have estimated
+\[
+  \SW_2^2(\mat A \vect X_i, \mat A \vect X_j) = \int \W_2^2(\langle \vect X, \mat A\T \theta \rangle, \langle \vect Y, \mat A\T \theta \rangle) \df \sigma(\theta),
+\]
+for random vectors $\vect X_i \sim P_i \in \mathcal{P}_2(\R^d), i = 1, \dots, N$,
+and $\mat A \in \textrm{GL}_d(\R)$.
+
+When constructing the sliced Wasserstein kernel $k_{SW}(\cdot, \cdot)$
+with scaling factor $s^2 > 0$ and length-scale $t > 0$,
+we observe that
+\begin{align*}
+  k_{SW}(\mat A\vect X_i, \mat A\vect X_j)
+  &= s^2\exp\left\{-\frac{1}{2t^2} \SW_2^2(\mat A\vect X_i, \mat A\vect X_j)\right\} \\
+  &= s^2\exp\left\{-\frac{1}{2} \SW_2^2\left(\frac{1}{t}\mat A\vect X_i, \frac{1}{t}\mat A\vect X_j\right)\right\}.
+\end{align*}
+Any choice of a positive $t \neq 1$ thus corresponds to multiplying
+the input distributions by a common factor.
+Equivalently, it corresponds to integrating
+$\W_2^2(\langle \vect X_i, \mat A\T \theta\rangle, \langle \vect X_j, \mat A\T \theta\rangle)$ over $\theta$
+with respect to the measure $\textrm{Uniform}(t^{-1}\Sphere^{d-1})$
+or to using $t^{-1}\mat A$ as the transformation matrix instead of $\mat A$.
+
+In applications, the length-scale $t$ is typically a hyperparameter tuned using training data.
+If the transformation matrix $\mat A = \mat \Sigma_{\textrm{SVD}} \mat V_{\textrm{SVD}}\T$ is learnt alongside $t$,
+we cannot uniquely identify $\mat A$ and $t$ as only the product $t^{-1}\mat A$, or more accurately: the product $t^{-2} \mat A\T \mat A$, matters.
+This suggests that it would be sensible to normalise the transformation matrix $\mat A$
+in such a way that $\varsigma(\mat A) = 1$, for some scale $\varsigma : \textrm{GL}_d(\R) \to (0, \infty)$.
+The Radon--Nikodym derivative of $\mu_{\mat A}$ with respect to $\mu$ obtained earlier
+suggests the scale map 
+\[
+  \varsigma(\mat A) = |\det \mat A| = \prod_{i=1}^d \sqrt{\lambda_i}.
+\]
+For this scale map, we may normalise $\tilde{\mat A} \in \textrm{GL}_d(\R)$
+by computing $\mat A = |\det(\tilde{\mat A})|^{-1/d} \tilde{\mat A}$.
+That said, other maps may be useful, too (e.g., matrix norms).
+With such a restriction in place, learning a suitable $\mat A$ amounts to learning 
+the appropriate anisotropy and orientation of $\mu_{\mat A}$ relative to $\mu$, whereas tuning
+$t$ amounts to learning an appropriate scale.
+
+
+\section{Behaviour under extreme anisotropy}
+It seems intuitively appealing to use global affine transformations to upweight
+those directions in the input distributions that are believed to be most informative 
+for the downstream task of predicting the outcome variable,
+while downweighting those that carry primarily noise.
+As the present section will show, however, transforming the input data
+by an extremely anisotropic affine transformation (even one aligned 
+with the signal) carries a risk of shooting oneself in the foot,
+as this can lead to degenerate sliced Wasserstein distances
+and, as a result, degenerate kernel matrices.
+
+\subsection{Asymptotic considerations}
+Let us investigate the effects of the anisotropy of the transformation matrix $\mat A$
+on sliced Wasserstein distances and the resulting kernels.
+For simplicity, we ignore any Monte Carlo variance, that is,
+we consider the distances $\SW_2^2(\mat A \vect X_i, \mat A \vect X_j)$ 
+and the kernel values $k_{ij} := k_{SW}(\mat A \vect X_i, \mat A \vect X_j)$.
+A further simplifying assumption is that $\vect X_i \sim P_i \in \mathcal{P}_2(\R^2)$
+for $i = 1, \dots, N$.
+Moreover, we consider a diagonal transformation matrix $\mat A$:
+As our earlier results show, we may assume that $\mat A = \mat \Sigma_{\textrm{SVD}} \mat V_{\textrm{SVD}}\T$,
+with $\mat \Sigma_{\textrm{SVD}}$ diagonal and $\mat V_{\textrm{SVD}}$ an orthogonal matrix.
+By focusing on a diagonal matrix $\mat A$, 
+we isolate the degree of anisotropy of the 
+transformation encoded by $\mat \Sigma_{\textrm{SVD}}$
+from its orientation as encoded by $\mat V_{\textrm{SVD}}$.
+
+We will consider two scenarios.
+In the first, 
+the transformation matrices considered have the form 
+$\mat A = \diag(\alpha, 1)$ for some $\alpha > 0$.
+In the second,
+we consider transformation matrices $\mat A$ such that $\varsigma(\mat A) = |\det \mat A| = 1$,
+namely, transformation matrices of the type 
+$\mat A = \diag(\sqrt{\alpha}, 1/\sqrt{\alpha})$ for some $\alpha > 0$.
+
+\paragraph{Unnormalised transformation matrices.}
+We first consider an unnormalised transformation matrix
+$\mat A = \diag(\alpha, 1)$ for $\alpha > 0$.
+It holds that
+\begin{align*}
+  \SW_2^2(\mat A \vect X_i, \mat A \vect X_j)
+  &= \int \W_2^2(\langle \mat A \vect X_i, \theta \rangle, \langle \mat A \vect X_j, \theta \rangle) \df \sigma(\theta) \\
+  &= \int \W_2^2(\alpha \theta_1 X_{i1} + \theta_2 X_{i2}, \alpha \theta_1 X_{j1} + \theta_2 X_{j2}) \df \sigma(\theta) \\
+  &= \alpha^2 \int \theta_1^2 \W_2^2 \left(X_{i1} + \frac{\theta_2}{\alpha \theta_1} X_{i2}, X_{j1} + \frac{\theta_2}{\alpha \theta_1} X_{j2}\right) \df \sigma(\theta).
+\end{align*}
+
+Since $\theta_1^2, \theta_2^2 \in (0, 1)$ $\sigma$-almost everywhere,
+it follows from Property 3 presented in Lemma \vref{lemma:wassersteinproperties}
+and the inequality $(a + b)^2 \leq 2a^2 + 2b^2$ that,
+for all $\alpha \geq 1$,
+\begin{align*}
+  \theta_1^2 \W_2^2 \left(X_{i1} + \frac{\theta_2}{\alpha \theta_1} X_{i2}, X_{j1} + \frac{\theta_2}{\alpha \theta_1} X_{j2}\right)
+  &\leq 2\theta_1^2\left(\E((X_{i1} + \frac{\theta_2}{\alpha \theta_1} X_{i2})^2) + \E((X_{j1} + \frac{\theta_2}{\alpha \theta_1} X_{j2})^2)\right) \\
+  &\leq 4\theta_1^2\left(\E(X_{i1}^2 + X_{j1}^2) + \left(\frac{\theta_2}{\alpha \theta_1}\right)^2 \E(X_{i2}^2 + X_{j2}^2)\right) \\
+  &\leq 4\left(\E(X_{i1}^2 + X_{j1}^2) + \frac{1}{\alpha^2} \E(X_{i2}^2 + X_{j2}^2)\right) \\
+  &\leq 4\left(\E(X_{i1}^2 + X_{j1}^2) + \E(X_{i2}^2 + X_{j2}^2)\right) \\
+  &= 4\left(\E(\|\vect X_i\|^2) + \E(\|\vect X_j\|^2)\right) \\
+  &=: C,
+\end{align*}
+$\sigma$-almost everywhere,
+with $\int C \df \sigma(\theta) = C < \infty$.
+Further, due to the continuity of the Wasserstein distance (see Lemma \vref{lemma:continuitywasserstein}),
+\[
+  \W_2 \left(X_{i1} + \frac{\theta_2}{\alpha \theta_1} X_{i2}, X_{j1} + \frac{\theta_2}{\alpha \theta_1} X_{j2}\right)
+  \to  \W_2 \left(X_{i1}, X_{j1}\right)
+\]
+as $\alpha \to \infty$.
+By the dominated convergence theorem, then, it follows that
+\begin{align*}
+  \lim_{\alpha \to \infty} \SW_2^2(\mat A \vect X_i, \mat A \vect X_j)
+  &= \left(\lim_{\alpha \to \infty} \alpha^2\right) \W_2^2(X_{i1}, X_{j1}) \int \theta_1^2 \df \sigma(\theta)  \\
+  &= \left(\lim_{\alpha \to \infty} \alpha^2\right) \frac{\W_2^2(X_{i1}, X_{j1})}{2}.
+\end{align*}
+In the last step, I used a symmetry argument:
+\[
+  2\int \theta_1^2 \df \sigma(\theta) = \int \theta_1^2 \df \sigma(\theta) + \int \theta_2^2 \df \sigma(\theta) = \int \theta_1^2 + \theta_2^2 \df \sigma(\theta)
+  = \int 1 \df \sigma(\theta) = 1.
+\]
+Hence, as $\alpha \to \infty$,
+\[
+  \SW_2^2(\mat A \vect X_i, \mat A \vect X_j) \to
+  \begin{cases}
+    0, & \textrm{if $\mathcal{L}(X_{i1}) = \mathcal{L}(X_{j1})$,} \\
+    \infty, & \textrm{otherwise.}
+  \end{cases}
+\]
+By the continuity of the kernel function, we thus find that
+\[
+  k_{ij} \to s^2[\mathcal{L}(X_{i1}) = \mathcal{L}(X_{j1})]
+\]
+as $\alpha \to \infty$.
+
+Assuming that $\mathcal{L}(\vect X_i) \neq \mathcal{L}(\vect X_j)$ whenever $i \neq j$,
+then, the sliced Wasserstein kernel matrix degenerates towards $s^2\mat I_N$ as $\alpha \to \infty$.
+At asymptote, the Gaussian process model will therefore assign the mean of the training
+outcomes to the test distributions without picking up on any signal.
+However, increasing the length-scale $t$ in lockstep with $\alpha$ would offset this degeneracy in practice.
+
+Let us now consider what happens when $\alpha \downarrow 0$.
+Using the same techniques as above, we find that, for all $\alpha \in (0, 1]$,
+\begin{align*}
+\W_2^2(\alpha \theta_1 X_{i1} + \theta_2 X_{i2}, \alpha \theta_1 X_{j1} + \theta_2 X_{j2})
+&\leq 4\left(\alpha^2\theta_1^2\E(X_{i1}^2 + X_{j_1}^2) + \theta_2^2\E(X_{i2}^2 + X_{j2}^2)\right) \\
+&\leq 4\E\left(X_{i1}^2 + X_{j_1}^2 + X_{i2}^2 + X_{j2}^2\right) \\
+&= C,
+\end{align*}
+for all $\alpha \in (0, 1]$
+$\sigma$-almost everywhere.
+Hence, we may apply the dominated convergence theorem to find that
+\begin{align*}
+  \lim_{\alpha \downarrow 0} \SW_2^2(\mat A \vect X_i, \mat A \vect X_j)
+  &= \lim_{\alpha \downarrow 0} \int \W_2^2(\alpha \theta_1 X_{i1} + \theta_2 X_{i2}, \alpha \theta_1 X_{j1} + \theta_2 X_{j2}) \df \sigma(\theta) \\
+  &= \int \W_2^2(\theta_2 X_{i2}, \theta_2 X_{j2}) \df \sigma(\theta) \\
+  &= \frac{\W_2^2(X_{i2}, X_{j2})}{2}.
+\end{align*}
+Thus, at asymptote, the resulting sliced Wasserstein kernel matrix will not be degenerate as $\alpha \downarrow 0$.
+It will, however, be sensitive only to distributional differences along the second dimension.
+
+\paragraph{Normalised transformation matrices.}
+We retain the setting from earlier but
+use a normalised transformation matrix $\mat A = \diag(\sqrt{\alpha}, 1/\sqrt{\alpha})$.
+Analogous calculations show that
+\[
+  \lim_{\alpha \to \infty} \SW_2^2(\mat A \vect X_i, \mat A \vect X_j) 
+  = \left(\lim_{\alpha \to \infty} \alpha\right) \frac{\W_2^2(X_{i1}, X_{j1})}{2} =
+  \begin{cases}
+    0, & \textrm{if $\mathcal{L}(X_{i1}) = \mathcal{L}(X_{j1})$,} \\
+    \infty, & \textrm{otherwise}.
+  \end{cases}
+\]
+In contrast to when using an unnormalised transformation matrix, however, 
+the rate of convergence to degeneracy
+is linear in $\alpha$ rather than quadratic.
+Hence, choosing $t$ proportionally to $\sqrt{\alpha}$ would offset the degeneracy in practice.
+
+Similar calculations reveal that
+\[
+ \lim_{\alpha \downarrow 0} \SW_2^2(\mat A \vect X_i, \mat A \vect X_j)
+ = \lim_{\alpha \downarrow 0}\left(\frac{1}{\alpha}\right) \frac{\W_2^2(X_{i2}, X_{j2})}{2}
+ = \begin{cases}
+    0, & \textrm{if $\mathcal{L}(X_{i2}) = \mathcal{L}(X_{j2})$,} \\
+    \infty, & \textrm{otherwise}.
+   \end{cases}
+\]
+In this case,
+choosing $t$ proportionally to $\alpha^{-1/2}$ would offset the degeneracy in practice.
+
+\subsection{Illustrations}
+In the remainder of this section, 
+I simulate and analyse data under two scenarios.
+In the first, only the first dimension contains a signal of the outcome variable;
+in the second, the first dimension contains most of the signal of the outcome variable,
+but the second dimension contains some signal, too.
+
+\paragraph{Set-up.}
+We consider $(P_i, y_i)_{i=1}^{100}$, where
+\[
+  P_i = \mathcal{N}_2(\vect \mu_i, \mat I_2)
+\]
+and
+\[
+  y_i = f(\mu_{i1}, \mu_{i2}),
+\]
+for a function $f : \R^2 \to \R$ that will be introduced shortly,
+$i = 1, \dots, 100$.
+From each distribution $P_i$, a simple random sample with 200 observations is drawn.
+These observations are represented in a matrix $\mat M_i \in \R^{200 \times 2}$.
+Given $(\mat M_i, y_i)_{i=1}^{50}$ and $(\mat M_i)_{i=51}^{100}$, the aim is to predict 
+$y_{51}, \dots, y_{100}$.
+
+The mean vectors $\vect \mu_1, \dots, \vect \mu_{100}$ 
+are drawn independently from $\textrm{Uniform}((-\pi, \pi)^2)$.
+As for the generation of the outcomes $y_1, \dots, y_{100}$,
+two scenarios are considered.
+To this end, we define a helper function
+\begin{align*}
+           g : \R &\to      \R, \\
+                x &\mapsto  \begin{cases}
+                              \frac{\cos(2\pi x) - \cos(\pi x)}{\pi x}, & \textrm{if $x \neq 0$}, \\
+                              0,                                        & \textrm{if $x = 0$};
+                            \end{cases}
+\end{align*}
+see Figure \ref{fig:functiong}.
+In the first scenario, the outcome data are generated as
+\[
+  y_i = f(\vect \mu_i) := 1.5g(\mu_{i1});
+\]
+in the second, they are generated as
+\[
+  y_i = f(\vect \mu_i) := g(\mu_{i1}) + \frac{1}{2}g(\mu_{i2}),
+\]
+$i = 1, \dots, 100$.
+That is, in the first scenario, the entire signal is contained in the distributions' first dimension;
+in the second, two-thirds of the signal is contained in the first dimension, 
+and the remaining third is contained in the second dimension.
+
+<<echo=FALSE, fig.align = "center", fig.width = 2*2.5, fig.height = 2*2, out.width = "0.4\\textwidth", fig.cap = "The function $g$ used to generate the outcome data.\\label{fig:functiong}", dev = "cairo_pdf">>=
+g <- function(x) (cos(2*pi*x) - cos(pi * x))/(pi * x)
+
+op <- par(no.readonly = TRUE)
+par(bty = "n", las = 1, mfrow = c(1, 1),
+    mar = c(4.1, 4.1, 0.5, 0.5))
+curve(g(x), from = -pi, to = pi, n = 10001, ylim = c(-1.2, 1.2),
+      xlab = expression(x),
+      ylab = expression(g(x)), xaxt = "n")
+axis(1, at = pi * seq(-1, 1, by = 0.5),
+     labels = expression(-pi, -pi/2, 0, pi/2, pi))
+par(op)
+@
+
+For both scenarios, the mean vectors and the empirical distributions are generated ten times.
+Each of the resulting ten data sets per scenario is analysed independently of the others.
+
+\paragraph{Analysis.}
+First, a baseline is computed by using the mean outcome in the training sample
+as the prediction for all outcomes:
+\[
+  \widehat y_i = \frac{1}{50}\sum_{j=1}^{50} y_j,
+\]
+$i = 51, \dots, 100$.
+
+Second, Gaussian process models using sliced Wasserstein kernels were used.
+Specifically, the kernel matrix was constructed as
+\[
+  \mat K = (\widehat k_{SW}(\mat M_i, \mat M_j;  \mat A\T \vect \theta_1, \dots,  \mat A\T \vect \theta_{50}))_{1 \leq i, j \leq 100},
+\]
+for independent $\vect \theta_1, \dots, \vect \theta_{50} \sim \textrm{Uniform}(\Sphere^1)$;
+see Remark \vref{remark:speedup}.
+The transformation matrix is constructed as
+\[
+  \mat A = c(\alpha)\begin{pmatrix}\alpha & 0 \\ 0 & 1\end{pmatrix}
+\]
+for $\alpha = 10^{-6}, \dots, 10^6$.
+Both unnormalised transformation matrices (with $c(\alpha) \equiv 1$)
+and normalised transformation matrices (with $c(\alpha) = \alpha^{-1/2}$)
+are considered.
+Further, the Gaussian process models are fitted using both hyperparameter tuning
+as well as with fixed hyperparameters 
+$\eta = 10^{-6}, t = 1, s^2 = 1$.
+
+Finally, for each pair of matrices, I computed the kernel value
+\[
+  k(\mat M_i, \mat M_j; \vect e_1, \vect e_2),
+\]
+see Definition \vref{def:sumofkernels}.
+This kernel combines the information from both marginals into a single kernel, 
+potentially allowing the model to use both projection directions simultaneously.
+The kernel was used in another Gaussian process model,
+whose hyperparameters $s^2_1, s^2_2, t_1, t_2$ and $\eta^2$ were
+tuned as explained in Remark \vref{remark:sumofkernels_hyperparameters}.
+
+\paragraph{Results.}
+The results for the first scenario are shown in Figure \vref{fig:results_anisotropy_1}.
+The top left panel shows that, if the transformation matrix is not normalised
+and the hyperparameters are not tuned, the model performs at baseline
+for large $\alpha$ and worse than baseline for small $\alpha$.
+This is consistent with our theoretical considerations:
+For large $\alpha$, the kernel matrix degenerates to a multiple of the identity,
+which would cause the Gaussian process model to assign the training sample mean
+to the test observations, leading to at-baseline performance.
+For small $\alpha$, the kernel matrix does not degenerate 
+but is dominated by noise instead.
+
+The bottom left panel shows at-baseline performance for both small 
+and large $\alpha$ when using a normalised transformation matrix without
+hyperparameter tuning. 
+This, too, is in keeping with our finding that the kernel matrix degenerates
+to a multiple of the identity in both cases.
+
+The panels on the right show that hyperparameter tuning offsets
+the kernel degeneracy for large $\alpha$, regardless of the way the 
+transformation matrix was constructed.
+For small $\alpha$, hyperparameter tuning seems to be useful in the sense
+that it prevents worse-than-baseline performance.
+It is also worth noting that the sliced Wasserstein kernels do not outperform
+a kernel based on the Wasserstein distances along the cardinal axes.
+
+\begin{figure}
+\centering
+\includegraphics[width = 0.8\textwidth]{figures/results_anisotropy_1}
+\caption{Mean and standard deviations of the root mean squared error obtained
+in the first scenario in ten runs. 
+The dotted horizontal line around $0.55$ shows the mean performance of a baseline model
+(training mean imputation);
+the dashed horizontal line around $0.25$ shows the mean performance of a 
+Gaussian process model based on Wasserstein distances along the cardinal axes only.}
+\label{fig:results_anisotropy_1}
+\end{figure}
+
+Let us now turn to the results for the second scenario, shown in 
+Figure  \vref{fig:results_anisotropy_2}.
+When the hyperparameters are not tuned (panels on the left-hand side),
+the results are qualitatively similar to those in the first scenario.
+When the hyperparameters are tuned, however, the model is able to 
+leverage the signal in the second dimension when $\alpha$ is small
+to beat the performance of the baseline model.
+This stands in contrast to the first scenario, where no above-baseline performance was achievable at small $\alpha$ even with tuning, since the second dimension carried no signal there.
+Upweighting the first dimension by using larger $\alpha$, however,
+improves performance, but there is again little difference between
+using a moderately large $\alpha$ and an extremely large one.
+Again, the sliced Wasserstein kernels do not outperform a kernel based
+on the Wasserstein distances along the cardinal axes.
+
+\begin{figure}
+\centering
+\includegraphics[width = 0.8\textwidth]{figures/results_anisotropy_2}
+\caption{Mean and standard deviations of the root mean squared error obtained
+in the second scenario in ten runs. 
+The dotted horizontal line around $0.42$ shows the mean performance of a baseline model
+(training mean imputation);
+the dashed horizontal line around $0.27$ shows the mean performance of a 
+Gaussian process model based on Wasserstein distances along the cardinal axes only.}
+\label{fig:results_anisotropy_2}
+\end{figure}
+
+\paragraph{Conclusions.}
+The simulations underscore the insights gleaned from the asymptotic analysis.
+Without hyperparameter tuning, 
+extreme values of $\alpha$ negatively affect predictive accuracy.
+Hyperparameter tuning offsets the degeneracy found for large $\alpha$ values,
+allowing the model to beat the baseline.
+For small $\alpha$, hyperparameter tuning prevents worse-than-baseline performance
+and may even help the model to beat it (in the second scenario).
+Of note, the use of normalised and unnormalised matrices yielded essentially
+identical results when the hyperparameters were tuned, suggesting
+that such tuning is able to offset scale differences between both kinds of 
+transformation matrix.
+
+However, the performance achieved by the models using sliced Wasserstein kernels
+did not improve upon that of a kernel constructed using only the Wasserstein distances
+along the two cardinal axes.
+This finding contrasts with the one obtained for the toy example
+in Chapter \ref{ch:toyexample}.
+The difference between both simulations is that in the present chapter, 
+the signal is entirely axis-aligned, whereas this was not the case in the previous chapter.
+A sum-of-kernels regression model may therefore serve as a useful point of comparison
+when gauging the extent to which the prediction is improved by considering the full distribution.
+
+\section{A real-data example}
+The explorations in the present chapter were spurred by my attempt to
+reanalyse a dataset collected by \citet{Eckermann2021} using sliced
+Wasserstein distances.
+During this attempt, I wondered  if and how the input data should be scaled or whitened.
+In this section, I will use Eckermann et al.'s dataset in order to illustrate the effects
+of scaling and whitening on a prediction task using sliced Wasserstein distances.
+Moreover, this dataset serves as a further, more realistic test case for gauging
+the added value of sliced Wasserstein distances over merely using Wasserstein 
+distances along the cardinal axes.
+
+\subsection{Data and objective}
+\citet{Eckermann2021} studied the hippocampi of $N = 20$ deceased individuals
+with a view to identifying architectural differences between the hippocampi
+of individuals with and without Alzheimer's disease.
+Their data extraction method is too complex to summarise here,
+but in brief,
+each of the twenty hippocampi was represented by an $n_i \times 5$ matrix,
+with the number of rows varying from 2,748 to 37,348 (median: 17,069).
+Each row represents a neuron through the following five measurements:
+\begin{itemize}
+  \item its nucleus compactness, as operationalised by the median of the electron density in the neuron. Compactness is not used in its mathematical sense here;
+  \item the normalised variance of the electron density within the nucleus;
+  \item the neuron's volume in cubic micrometres;
+  \item a measure of the nucleus's sphericity;
+  \item the number of neighbours, i.e., of other neurons within 13.5 µm of the neuron.
+\end{itemize}
+
+While \citet{Eckermann2021} were interested in differences between individuals
+with and without Alzheimer's disease,
+the goal that I will pursue is to assess to what extent the distributional
+information in the first four of these measurements can be used to 
+retrieve two scalar summary statistics based on the fifth one,
+namely (1) the 10\% trimmed mean of the number of neighbours for each hippocampus
+and (2) the entropy of the distribution of the number of neighbours for each hippocampus.
+Denoting by $\widehat p_k$ the proportion of neurons in a given hippocampus 
+for which the number of neighbours
+equals $k$, this entropy is computed as 
+$-\sum_{k \geq 0}\widehat p_k \log \widehat p_k$,
+with the convention that $0 \log 0 = 0$.
+
+\subsection{Analysis}
+\paragraph{Data preparation.}
+I first applied the same transformation and filtering steps as \citet{Eckermann2021},
+resulting in a dataset comprising $\sum_{i=1}^{20} n_i =$ 344,420 neurons.
+Ten of the neurons had negative compactness values.
+I removed these on the assumption that these must have been caused by some transcription error,
+but their impact on the results below is presumably negligible.
+Noticing that the volume variable spanned several orders of magnitude across the matrices
+(from 35 to 19,958), I $\log_{10}$-transformed this variable.
+
+For the prediction task, the input matrix $\mat M_i \in \R^{n_i \times 4}$
+containing the $n_i$ compactness, density variance, volume, and sphericity measurements
+for the $i$-th hippocampus's neurons serve as the input and are interpreted as
+representing an empirical distribution $\widehat P_i$.
+Two scalar summaries of the distributions of the number of neighbours will serve
+as outcomes:
+the 10\% trimmed mean of the number of neighbours observed for the $i$-th hippocampus,
+and the entropy of the distribution of the number of neighbours observed for the $i$-th hippocampus.
+
+\paragraph{Model assessment.}
+Since the number of input matrices is small ($N = 20$),
+I used leave-one-out crossvalidation (\textsc{loocv}) to assess the predictive
+utility of the modelling techniques used.
+More precisely, the outcome for the $i$-th hippocampus was predicted by a
+model for which only $(\mat M_j, y_j)_{j \neq i}$ were used as training data.
+This also means that in order to generate a prediction for the $i$-th outcome,
+the scaling or whitening matrices (see below) were constructed using 
+the matrices $(\mat M_j)_{j \neq i}$ only.
+The predictions so obtained are referred to as \textit{out-of-fold predictions}
+in machine learning parlance.
+
+Model fit was evaluated using the root mean squared error (\textsc{rmse})
+between the true outcome values and the out-of-fold predictions.
+
+By way of a baseline, I used training set mean imputation.
+Precisely, I computed
+\[
+  \widehat y_i = \frac{1}{19} \sum_{j \neq i} y_j,
+\]
+for $i = 1, \dots, 20$.
+
+\paragraph{Distance computation and kernel construction.}
+Several distances between the input matrices were computed.
+
+First, I computed 
+$\widehat \SW_2^2(\mat M_i, \mat M_j; \vect \theta_1, \dots, \vect \theta_{200})$
+for all $1 \leq i < j \leq 20$
+in order to build the corresponding kernel $\hat k_{SW}(\mat M_i, \mat M_j; \vect \theta_1, \dots, \vect \theta_{200})$.
+The same realisations of $\vect \theta_1, \dots, \vect \theta_{200} \simiid \sigma$
+were reused for all sliced Wasserstein computations.
+I also computed Wasserstein distances along the cardinal axes in order to build the kernel
+$k(\mat M_i, \mat M_j; \vect e_1, \dots, \vect e_4), 1 \leq i < j \leq 20$ (see Definition \vref{def:sumofkernels}).
+
+Next, I computed sliced Wasserstein distances between scaled versions 
+of the input matrices.
+More precisely, when predicting the $i$-th outcome, I computed a pooled estimate of the 
+joint covariance matrix of $(\widehat P_j)_{j \neq i}$ as
+\[
+  \widehat {\mat \Sigma}_{i}
+  = \frac{1}{19}\sum_{j \neq i} \widehat {\mat \Sigma}(\mat M_j),
+\]
+where $\widehat {\mat \Sigma}(P_j)$ 
+is the usual estimate of the covariance matrix of the $j$-th
+distribution based on the empirical sample represented in $\mat M_j$.
+The input matrices were then scaled as
+\[
+  \widetilde {\mat M}_k = \mat M_k \mat S_i,
+\]
+with $\mat S_i$ the diagonal matrix containing the multiplicative inverses
+of the square roots of the diagonal elements of $\widehat {\mat \Sigma}_{i}$,
+$k = 1, \dots, 20$.
+So while the $i$-th input matrix $\mat M_i$ was scaled,
+the scaling matrix was not learnt from it.
+Note that no centring was applied as the theoretical considerations from this chapter
+showed them to be irrelevant for sliced Wasserstein computations.
+I computed the Wasserstein distances between the scaled input matrices as
+$\widehat \SW_2^2(\mat M_i, \mat M_j; \mat S_k\T \vect \theta_1, \dots, \mat S_k\T \vect \theta_{200})$
+in order to build the corresponding kernel for predicting $y_k, k = 1, \dots, 20$.
+The Wasserstein distances along the cardinal axes were not recomputed
+for the scaled input matrices since global scaling merely amounts to picking
+a different length-scale for the Wasserstein kernel.
+
+Finally, I applied global whitening transformations to the input matrices.
+Using the spectral decomposition (and dropping the index for ease of exposition)
+\[
+  \widehat {\mat \Sigma} = \mat U \mat \Lambda \mat U\T,
+\]
+two whitening matrices were defined as
+\begin{align*}
+  \mat W_{\textrm{ZCA}} &= \mat U \mat \Lambda^{-1/2} \mat U\T, \\
+  \mat W_{\textrm{PCA}} &= \mat \Lambda^{-1/2} \mat U\T.
+\end{align*}
+The whitening matrices $\mat W_{\textrm{ZCA-cor}}$
+and $\mat W_{\textrm{PCA-cor}}$ were defined similarly, 
+but starting from the estimated correlation matrix rather than the estimated
+covariance matrix.
+More precisely, we use the spectral decomposition of the correlation matrix
+\[
+ \mat S^{-1} \widehat {\mat \Sigma} \mat S^{-1} = \mat V \Delta \mat V\T
+\]
+and define
+\begin{align*}
+  \mat W_{\textrm{ZCA-cor}} &= \mat V \mat \Delta^{-1/2} \mat V\T \mat S^{-1}, \\
+  \mat W_{\textrm{PCA-cor}} &= \mat \Delta^{-1/2} \mat V\T \mat S^{-1}.
+\end{align*}
+A fifth whitening matrix was defined as
+\[
+  \mat W_{\textrm{Chol}} = \mat L^{-1},
+\]
+where $\mat L$ is the lower triangular matrix resulting from
+the Cholesky decomposition $\widehat {\mat \Sigma} = \mat L \mat L\T$.
+Starting from $\widehat {\mat \Sigma}$, the whitening matrices were
+constructed using the R package \texttt{whitening} \citep{whitening}.
+
+For the sliced Wasserstein distances, theory shows that the choice
+of the precise whitening procedure is not important:
+While, for fixed $\vect \theta_1, \dots, \vect \theta_{200}$, $\widehat \SW_2^2(\mat M_i, \mat M_j; \mat W\T \vect \theta_1, \dots, \mat W\T \vect \theta_{200})$ is \emph{not}
+invariant to the choice of a whitening matrix derived from $\widehat {\mat \Sigma}$,
+differences in the result are due solely to sampling error.
+I therefore arbitrarily picked $\mat W_{\textrm{ZCA}}$ as the whitening matrix
+and only estimated the sliced Wasserstein distances as
+$\widehat \SW_2^2(\mat M_i, \mat M_j; \mat W_{\textrm{ZCA}}\T \vect \theta_1, \dots, \mat W_{\textrm{ZCA}}\T \vect \theta_{200})$.
+For the Wasserstein kernels, however, all five methods were applied.
+That is, I constructed
+\[
+k(\mat M_i, \mat M_j; \mat W\T \vect e_1, \dots, \mat W\T \vect e_4),
+\]
+$1 \leq i < j \leq 20,$
+for each $\mat W \in 
+\{\mat W_{\textrm{ZCA}}, \mat W_{\textrm{PCA}}, \mat W_{\textrm{ZCA-cor}},\mat W_{\textrm{PCA-cor}}, \mat W_{\textrm{Chol}}\}$.
+
+The kernels so constructed were fed to separate Gaussian process regression models,
+one for each kernel, for each outcome variable, and for each of the twenty folds.
+The hyperparameters were tuned as explained in Chapter \ref{ch:gpr}, separately
+for each kernel, for each outcome variable, and for each of the twenty folds.
+Hyperparameter searches were initialised randomly fifty times.
+
+\subsection{Results}
+Figure \vref{fig:brain_trimmed_mean} plots the out-of-fold predictions for 
+the twenty 10\% trimmed means for each modelling approach. 
+A baseline model that does not take into account the input matrices
+achieves an \textsc{rmse} of 0.759.
+The model based on the sliced Wasserstein
+distances between the raw input matrices does not outperform this baseline;
+the model based on the sliced Wasserstein distances between the scaled
+input matrices fares slightly better with an \textsc{rmse} of 0.697.
+Whitening improves performance more noticeably for the sliced Wasserstein
+kernel, resulting in an \textsc{rmse} of 0.601.
+
+\begin{figure}
+\centering
+\includegraphics[width = \textwidth]{figures/brain_trimmed_mean}
+\caption{Out-of-fold predictions for 10\% trimmed means of the number of neighbours
+by nine models based on different kernels.
+The facets are sorted left to right, top to bottom, in order of descending
+root mean squared error.
+The root mean squared error of a baseline model that 
+uses the mean of the in-fold outcomes as the prediction was $0.759$,
+meaning that sliced Wasserstein kernel based on
+the raw input matrices could not beat this baseline.}
+\label{fig:brain_trimmed_mean}
+\end{figure}
+
+Kernels based on the Wasserstein distances along the cardinal axes,
+labelled `marginal Wasserstein' in the figure, tend to perform better in
+this example.
+When based on the raw input matrices, performance is modest 
+at an \textsc{rmse} of 0.652.
+However, whitening using the ZCA-cor, ZCA or Cholesky approach roughly half
+this \textsc{rmse}.
+Wasserstein kernels based on PCA- and PCA-cor-whitened input matrices
+show in-between performance.
+
+Figure \vref{fig:brain_entropy} shows the out-of-fold predictions for 
+entropy outcomes.
+A baseline model that does not take into account the input matrices
+achieves an \textsc{rmse} of 0.165, which neither the sliced nor the `marginal'
+Wasserstein kernels based on raw input matrices are able to beat.
+Scaling slightly improves the performance of the sliced Wasserstein kernel
+(\textsc{rmse}: 0.153); whitening results in a further improvement
+still (\textsc{rmse}: 0.126).
+
+\begin{figure}
+\centering
+\includegraphics[width = \textwidth]{figures/brain_entropy}
+\caption{Out-of-fold predictions for the entropy of the 
+empirical distributions of the number of neighbours
+by nine models based on different kernels.
+The facets are sorted left to right, top to bottom, in order of descending
+root mean squared error.
+The root mean squared error of a baseline model that 
+uses the mean of the in-fold outcomes as the prediction was $0.165$,
+meaning that both the sliced and marginal Wasserstein kernels based on
+the raw input matrices could not beat this baseline.}
+\label{fig:brain_entropy}
+\end{figure}
+
+The effects of whitening are more pronounced for the 
+`marginal' Wasserstein kernels, with ZCA-cor-whitening
+resulting in \textsc{rmse}s of $0.063$ but the other 
+whitening approaches trailing noticeably.
+
+\subsection{Conclusions}
+First, the results obtained on this more realistic dataset
+illustrate the effect that the global affine operations of scaling and whitening
+have on the usefulness of sliced Wasserstein distances for regression tasks:
+for both outcome variables, predictive performance was quite literally worse
+than useless when using sliced Wasserstein distances between the raw input matrices.
+After scaling, the sliced Wasserstein approach was able to beat the baseline;
+after whitening, the improvement was more noticeable still.
+
+Second, the results illustrate that the choice of the precise whitening method
+(shown theoretically not to affect sliced Wasserstein distances) may matter
+quite substantially when using Wasserstein distances along the cardinal axes.
+Unlike when using sliced Wasserstein distances, the orientation of the whitened
+coordinate system affects the Wasserstein distances along its cardinal axes.
+
+Third, like in the more artificial example in the previous section,
+the results of the current section demonstrate that a modelling approach
+based on the sum of kernels derived from Wasserstein distances along the cardinal
+axes can compare favourably to a sliced Wasserstein approach.
+The insights from this and the preceding chapters suggest that this is because the 
+relevant signal lives approximately along one or more of the cardinal axes
+in the (whitened) coordinate system.
+
+\section{Conclusions}
+The central theoretical insight presented in this chapter is that global affine
+transformations of the input distributions amount to a distortion of the measure
+on the unit sphere in the integral that defines the sliced Wasserstein distance.
+This distortion is characterised by a Radon--Nikodym derivative that depends
+only on $\mat A \T \mat A$, and not on the transformation matrix $\mat A$
+itself or on any global translation.
+In practical terms, this means that analysts wishing to apply a global whitening
+transformation do not need to consider the pros and cons of different whitening
+strategies: up to sampling error,
+they all give rise to the same sliced Wasserstein distances.
+This, importantly, is not the case for Wasserstein distances computed along individual directions;
+the real-data example illustrates that the choice of whitening procedure can substantially
+affect the usefulness of such distances.
+
+An asymptotic analysis further showed that extremely anisotropic transformations
+cause uninformative or degenerate kernels. 
+Hyperparameter tuning can be used to combat these effects.
+A practical recommendation is to always tune hyperparameters when applying
+anisotropic transformations so as to avoid degraded performance.
+
+The simulations also revealed that, when the signal is axis-aligned, 
+kernels based on Wasserstein distances along the cardinal directions 
+can match or outperform sliced Wasserstein kernels.
+The real-data example corroborated this finding, 
+which motivates the use of such kernels as a benchmark in future work.
