@@ -461,8 +461,8 @@ the sliced Wasserstein kernel as follows.
 \parend
 
 In practice, $\SW_2^2(\mu, \nu)$ is estimated by Monte Carlo samples. 
-Substituting $\SW_2^2(\mu, \nu)$ by
-$\widehat{\SW}_2^2(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)$, we obtain
+Substituting $\widehat{\SW}_2^2(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)$ for
+$\SW_2^2(\mu, \nu)$, we obtain
 \[
   \hat k_{SW}(\mu, \nu; \vect \theta_1, \dots, \vect \theta_L)
   =  s^2\exp\left\{-\frac{1}{2t^2}\widehat{\SW}_2^2(\mu, \nu; \vect \theta_{1}, \dots, \vect \theta_L)\right\}.
