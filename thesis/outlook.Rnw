@@ -1,0 +1,88 @@
+\chapter{Conclusions and outlook}\label{ch:outlook}
+I set out to answer these two questions (see page \pageref{page:rqs}):
+\begin{enumerate}
+  \item Can examples be identified in which the combination of 
+        sliced Wasserstein distances and Gaussian process regression substantially
+        outperforms natural alternative approaches even outside of the graph domain
+        covered by \citet{CarpinteroPerez2024,CarpinteroPerez2025}?
+        
+  \item Rescaling a single dimension can drastically alter pairwise 
+        sliced Wasserstein distances, making them scale-sensitive in a way 
+        that many vector-based methods are not.
+        How should analysts preprocess distributions to address this sensitivity, 
+        and can predictive accuracy be improved by deliberately rescaling informative dimensions?
+\end{enumerate}
+
+As Chapter \ref{ch:toyexample} has demonstrated,
+the answer to the first question is `yes': If the marginal distributions 
+are ambiguous as to the outcome variable but the joint distribution is not,
+the combination of sliced Wasserstein distances and Gaussian process regression
+handily outperforms natural alternatives based on the marginal distributions.
+That said, the examples in Chapter \ref{ch:affine} illustrate that,
+in other situations, this same combination can struggle to perform on par with 
+approaches based only on marginal distributions.
+
+This observation suggests that it may be useful to consider both 
+differences between the input distributions' marginals as well as
+differences between their copulas.
+One concrete way to achieve this would be to build kernels based on
+Wasserstein distances between the marginal distributions and to supplement
+these with a kernel 
+that quantifies differences between the input distributions' copulas,
+for instance by converting the marginals to uniform distributions before
+computing sliced Wasserstein distances.
+Such an approach may enable analysts to pinpoint more accurately
+which aspects of the input distributions carry the predictive signal,
+which could allow them to expend modelling and computational effort 
+in a more targeted way: 
+After all, if the signal is contained almost entirely in a handful of margins,
+it seems wasteful to evaluate distances to new inputs along redundant directions.
+Of course, the statistical and mathematical implications of this proposal
+would have to be studied in earnest, too.
+
+As for the second question, Chapter \ref{ch:affine} showed that the effect
+of global affine transformations of the input distributions on sliced
+Wasserstein distances amounts to a distortion of the measure on the unit sphere.
+For an affine transformation $\vect x \mapsto \mat A \vect x + \vect b$,
+with $\vect x, \vect b \in \R^d, \mat A \in \textrm{GL}_d(\R)$, this distortion
+depends solely on $\mat A\T \mat A$, not on $\mat A$ itself.
+A practical consequence of this is that, when whitening the input distributions,
+the precise choice of whitening procedure does not affect the resulting
+sliced Wasserstein distances.
+The asymptotic analyses in this chapter also showed that extremely anisotropic
+affine transformations of the input distributions lead to degenerate kernel
+matrices, even if they emphasise the linear subspaces that carry the predictive signal.
+Appropriate hyperparameter tuning offsets this effect.
+
+To wrap up this thesis, I outline some avenues for future research that 
+may make for interesting Master's thesis topics.
+
+The first concerns the role of the kernel function to which the (sliced)
+Wasserstein distances are fed.
+I only considered kernels based on the Gaussian radial basis function;
+an analysis of the usefulness of other kernel functions,
+such as the power exponential and Matérn covariance functions,
+would be a natural next step.
+Moreover, it remains to be seen if there are circumstances in which
+the computationally more demanding kernel $\hat k_{USW}$ 
+(see page \pageref{eq:kusw}) is more useful for predictive modelling
+than is $\hat k_{SW}$.
+
+We have seen that a global affine transformation of the input distributions
+by means of a matrix $\mat A \in \textrm{GL}_d(\R)$ corresponds to a 
+distortion of the measure in the integral in the definition of the
+sliced Wasserstein distance. 
+The second avenue for future work concerns the questions of whether and how
+a suitable matrix $\mat A$ can be learnt efficiently from the training data.
+Relatedly, I did not have any success in using importance sampling to obtain
+an estimate of $\SW_2^2(\mat M_i \mat A, \mat M_j \mat A)$
+from
+$\left(\W_2^2(\langle \mat M_i, \vect \theta_{\ell} \rangle, \langle \mat M_j, \vect \theta_{\ell} \rangle)\right)_{\ell = 1}^L$ (Remark \vref{remark:importancesampling}).
+But a more targeted analysis may yet yield some useful insights.
+
+Finally, throughout this thesis, the focus has been exclusively on solving
+regression problems by means of Gaussian process models.
+An exploration of how Wasserstein and sliced Wasserstein distances
+can be used to solve classification problems and how they can be incorporated
+in other regression models would naturally extend the results developed
+in this thesis.
