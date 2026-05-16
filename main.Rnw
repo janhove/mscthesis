@@ -1,0 +1,237 @@
+\documentclass[10pt, a4paper, twoside]{book}
+
+\usepackage[top=1.25in, bottom=1.25in]{geometry}
+\usepackage[all]{nowidow}
+
+\usepackage{doi}
+
+\usepackage{setspace}
+\setstretch{1.25}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{enumitem}
+\setlist{leftmargin = 2cm}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathpazo}
+\usepackage{bm}
+
+\usepackage{siunitx}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\Tr}{Tr}
+\DeclareMathOperator*{\diag}{diag}
+\newcommand{\df}{\textrm{d}}      
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Var}{\textrm{Var}}
+\newcommand{\Cov}{\textrm{Cov}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Sphere}{\mathbb{S}}   
+\newcommand{\SW}{\textbf{SW}}     
+\newcommand{\W}{\textbf{W}}        
+\newcommand{\T}{^{\top}}
+\newcommand{\invT}{^{-\top}}
+\newcommand{\simiid}{\overset{\textrm{i.i.d.}}{\sim}}
+\newcommand{\eqd}{\overset{d}{=}}
+
+% Typesetting conventions
+\newcommand{\vect}[1]{\bm{#1}}
+\newcommand{\mat}[1]{\bm{#1}}
+\newcommand{\set}[1]{\mathcal{#1}}
+\newcommand{\ones}{\bm{1}}
+
+\usepackage{babel}
+
+\hyphenation{re-spec-tive-ly prob-a-bil-ity treat-ment un-infor-ma-tive Con-se-quent-ly dis-tri-bu-tion dis-tri-bu-tions in-de-pen-dent-ly trans-for-ma-tion equi-va-lent con-ver-gence nor-ma-lised dis-tri-bu-tio-nal Wasser-stein hyper-para-meters}
+
+\newcommand{\todo}[1]{\textcolor{red}{#1}}
+
+\usepackage[small, explicit]{titlesec}
+\usepackage{fancyhdr}
+
+% References
+\usepackage{natbib}
+\renewcommand{\bibname}{References}
+
+% Proofs, lemmas, definitions
+\makeatletter
+\def\thm@space@setup{%
+  \thm@preskip=\parskip \thm@postskip=0pt
+}
+\makeatother
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+\NewDocumentCommand{\mypar}{som}{%
+  \refstepcounter{theorem}%
+  \par\medskip\noindent\textbf{#3 \thetheorem}%
+    \IfBooleanF{#1}{\IfValueT{#2}{\space(#2)}}\textbf{.}%
+}
+% After comments / exercises
+\newcommand*{\parend}[1][$\diamondsuit$]{%
+\leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
+    \quad\hbox{#1}%
+}
+\newcommand{\parendeq}{\tag*{$\diamondsuit$}}
+
+
+% Key terms
+\newcommand{\term}[1]{\textbf{#1}}
+
+% After proofs
+\newcommand*{\QED}[1][$\diamondsuit$]{%
+\leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
+    \quad\hbox{#1}%
+}
+
+% Algorithms
+\usepackage[linesnumbered,boxed,vlined,algochapter]{algorithm2e}
+\SetArgSty{textup}
+\setlength{\algomargin}{1.5em}
+\SetAlCapSkip{1em}
+
+\usepackage{hyperref}
+\usepackage{varioref}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage[margin=10pt, labelfont=bf, width=.8\textwidth]{caption}
+
+\title{(Sliced) Wasserstein distances and their application to regression}
+\author{Jan Vanhove}
+
+\begin{document}
+
+\newgeometry{margin=1in}
+\begin{titlepage}
+    \centering
+    \vspace*{6cm}
+
+    {\huge Sliced Wasserstein distances and their application to regression problems\par}
+    \vspace{2.5cm}
+
+    {Masterarbeit der Philosophisch-naturwissenschaftlichen Fakultät der Universität Bern \\
+    vorgelegt von\par}
+    
+    {\Large Jan Vanhove\par}
+    
+    {2026}
+    \vspace{1cm}
+
+    {Supervisor\par}
+    {\large Prof.\ Dr.\ D.\ Ginsbourger\\}
+    \vspace{1cm}
+
+
+    \vspace{1cm}
+    {University of Bern \\ Institute of Mathematical Statistics and Actuarial Science\par}
+    
+    \vfill
+    
+\end{titlepage}
+\restoregeometry
+
+
+\thispagestyle{empty}
+
+\frontmatter
+
+\chapter*{Abstract}
+The sliced Wasserstein distance is a fairly recently developed metric between
+probability distributions.
+In this Master's thesis, I investigate how
+it can be used in conjunction with Gaussian process regression to solve
+regression problems in which the inputs are represented by probability distributions.
+After spelling out the theoretical foundations (Wasserstein and sliced
+Wasserstein distances, positive-definite kernels, 
+and Gaussian process regression),
+I present a toy example that demonstrates that a workflow incorporating
+sliced Wasserstein distances can capitalise on distributional differences
+in the inputs that remain invisible to methods relying solely on 
+marginal distributions and bivariate correlations.
+I then analyse how global affine transformations of the input distributions
+affect sliced Wasserstein distances and the kernels derived from them.
+In particular, I show that different whitening procedures produce the same 
+sliced Wasserstein distances.
+Asymptotic analyses reveal that extremely anisotropic transformations can lead
+to degenerate kernel matrices, but that hyperparameter tuning can offset
+this degeneracy.
+Simulations and a real-data example corroborate these findings
+and further suggest that kernels based on Wasserstein distances along the 
+cardinal axes can match or even outperform sliced Wasserstein distances, provided
+that the predictive signal is approximately axis-aligned.
+
+\chapter*{Acknowledgements}
+Je remercie mon directeur de thèse, David Ginsbourger,
+pour ses suggestions, pour sa générosité avec son temps et son café
+ainsi que pour sa patience.
+Je n'ai probablement pas été l'étudiant le plus facile à diriger.
+Je tiens également à remercier Antoine Faul pour son aide lors d'une
+première tentative à aborder un sujet de thèse.
+
+Mein Dank gilt ausserdem den Freundinnen und Freunden,
+die in den vergangenen sechs Jahren dafür gesorgt haben,
+dass mein Alltag mehr als Job, Mathematik und Computercode umfasste.
+Ich nenne sie nicht alle namentlich, aber bei der nächsten Gelegenheit---ob
+bei einer Wanderung, Runde Karten oder Scrabble, 
+Bandprobe oder Meisterfeier von Gottéron---geht das erste fermentierte
+Getreidesäftchen auf mich.
+
+Tot slot bedank ik mijn ouders voor hun onvoorwaardelijke steun.
+Het waren niet de makkelijkste jaren.
+De toekomst zal uitwijzen of het de moeite waard was.
+
+Ik draag deze thesis op aan Charlotte Gooskens (1962--2026)
+en Vincent van Heuven (1949--2026), 
+bij wie ik mijn eerste stappen in de wetenschap zette.
+Ze hebben mijn leven meer beïnvloed dan ze zelf voor mogelijk hadden kunnen houden.
+
+\begin{flushright}
+  Jan Vanhove \\
+  \texttt{jan.vanhove@students.unibe.ch, janvanhove@gmail.com} \\
+  Fribourg, May 2026
+\end{flushright}
+
+\setcounter{tocdepth}{1}
+\tableofcontents
+
+\mainmatter
+
+<<introduction, child = 'introduction.Rnw'>>=
+@
+
+<<wasserstein, child = 'wasserstein.Rnw'>>=
+@
+
+<<gpr, child = 'gpr.Rnw'>>=
+@
+
+<<toy, child = 'toy_example.Rnw'>>=
+@
+
+<<affine, child = 'affine.Rnw'>>=
+@
+
+<<outlook, child = 'outlook.Rnw'>>=
+@
+
+\bibliographystyle{unified} 
+\bibliography{msc}
+
+\newgeometry{margin=0pt}
+\thispagestyle{empty}
+\noindent
+\includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{erklaerung.pdf}
+\restoregeometry
+\end{document}
+
