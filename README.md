@@ -33,7 +33,7 @@ The data from Eckermann et al.'s (2021) study that are used for the examples
 in Section 5.6 are available as part of a 64.8 GB zipped directory
 from [zenodo](https://doi.org/10.5281/zenodo.5658994).
 I extracted the relevant Excel files from this directory and made them
-available here under `data/eckerman/` as allowed under the [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/).
+available here under `data/eckermann/` as allowed under the [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/).
 
 ## References
 Eckermann, Marina, Bernhard Schmitzer, Franziska van der Meer, 
