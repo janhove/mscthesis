@@ -35,7 +35,7 @@ from [zenodo](https://doi.org/10.5281/zenodo.5658994).
 I extracted the relevant Excel files from this directory and made them
 available here under `data/eckermann/` as allowed under the [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/).
 
-## References
+## Reference
 Eckermann, Marina, Bernhard Schmitzer, Franziska van der Meer, 
 Jonas Franz, Ove Hansen, Christine Stadelmann & Tim Salditt. 
 2021. 
