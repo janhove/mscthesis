@@ -114,7 +114,7 @@ Hence,
  &= \int_{\R^d} \W_2^2(\langle \vect X, z/\|z\| \rangle, \langle \vect Y, z/\|z\| \rangle) \varphi(z) \df z,
 \end{align*}
 where $\varphi : \R^d \to (0, \infty), \vect z \mapsto (2\pi)^{-d/2}\exp\left(-\|\vect z\|^2 / 2\right),$
-is the canonical Lebesgue density of the $d$-variate standard normal distribution.
+is the Lebesgue density of the $d$-variate standard normal distribution.
 Similarly, and after using the homogeneity property
 of the Wasserstein distance (Lemma \ref{lemma:wassersteinproperties}), we see that
 \begin{align*}
@@ -717,7 +717,8 @@ whose hyperparameters $s^2_1, s^2_2, t_1, t_2$ and $\eta^2$ were
 tuned as explained in Remark \vref{remark:sumofkernels_hyperparameters}.
 
 \paragraph{Results.}
-The results for the first scenario are shown in Figure \vref{fig:results_anisotropy_1}.
+The results for the first scenario in terms of the root mean squared error
+are shown in Figure \vref{fig:results_anisotropy_1}.
 The top left panel shows that, if the transformation matrix is not normalised
 and the hyperparameters are not tuned, the model performs at baseline
 for large $\alpha$ and worse than baseline for small $\alpha$.
@@ -727,6 +728,18 @@ which would cause the Gaussian process model to assign the training sample mean
 to the test observations, leading to at-baseline performance.
 For small $\alpha$, the kernel matrix does not degenerate 
 but is dominated by noise instead.
+
+\begin{figure}
+\centering
+\includegraphics[width = 0.8\textwidth]{figures/results_anisotropy_1}
+\caption{Mean and standard deviations of the root mean squared error obtained
+in the first scenario in ten runs. 
+The dotted horizontal line around $0.55$ shows the mean performance of a baseline model
+(training mean imputation);
+the dashed horizontal line around $0.25$ shows the mean performance of a 
+Gaussian process model based on Wasserstein distances along the cardinal axes only.}
+\label{fig:results_anisotropy_1}
+\end{figure}
 
 The bottom left panel shows at-baseline performance for both small 
 and large $\alpha$ when using a normalised transformation matrix without
@@ -741,18 +754,6 @@ For small $\alpha$, hyperparameter tuning seems to be useful in the sense
 that it prevents worse-than-baseline performance.
 It is also worth noting that the sliced Wasserstein kernels do not outperform
 a kernel based on the Wasserstein distances along the cardinal axes.
-
-\begin{figure}
-\centering
-\includegraphics[width = 0.8\textwidth]{figures/results_anisotropy_1}
-\caption{Mean and standard deviations of the root mean squared error obtained
-in the first scenario in ten runs. 
-The dotted horizontal line around $0.55$ shows the mean performance of a baseline model
-(training mean imputation);
-the dashed horizontal line around $0.25$ shows the mean performance of a 
-Gaussian process model based on Wasserstein distances along the cardinal axes only.}
-\label{fig:results_anisotropy_1}
-\end{figure}
 
 Let us now turn to the results for the second scenario, shown in 
 Figure  \vref{fig:results_anisotropy_2}.
@@ -779,6 +780,12 @@ the dashed horizontal line around $0.27$ shows the mean performance of a
 Gaussian process model based on Wasserstein distances along the cardinal axes only.}
 \label{fig:results_anisotropy_2}
 \end{figure}
+
+When model performance is evaluated in terms of the negative log 
+predictive density (see page \pageref{nlpd}),
+the results are qualitatively similar in both scenarios.
+The corresponding plots are available from this thesis' code repository
+at \url{https://github.com/janhove/mscthesis/}.
 
 \paragraph{Conclusions.}
 The simulations underscore the insights gleaned from the asymptotic analysis.
@@ -877,13 +884,21 @@ in machine learning parlance.
 
 Model fit was evaluated using the root mean squared error (\textsc{rmse})
 between the true outcome values and the out-of-fold predictions.
-
 By way of a baseline, I used training set mean imputation.
 Precisely, I computed
 \[
   \widehat y_i = \frac{1}{19} \sum_{j \neq i} y_j,
 \]
 for $i = 1, \dots, 20$.
+
+Additionally, I obtained the average negative log predictive density (\textsc{nlpd})
+by computing, for each outcome, its log density under a univariate normal distribution
+with the outcome's out-of-fold prediction as its mean and the outcome's 
+out-of-fold posterior variance as its variance.
+These log densities were then averaged.
+In contrast to the \textsc{nlpd} values I computed earlier (see \pageref{nlpd}),
+these \textsc{nlpd} scores do not take the joint distribution of the outcomes
+into account as only a single datum was predicted for each crossvalidation fold.
 
 \paragraph{Distance computation and kernel construction.}
 Several distances between the input matrices were computed.
@@ -983,11 +998,12 @@ Hyperparameter searches were initialised randomly fifty times.
 
 \subsection{Results}
 Figure \vref{fig:brain_trimmed_mean} plots the out-of-fold predictions for 
-the twenty 10\% trimmed means for each modelling approach. 
+the twenty 10\% trimmed means for each modelling approach;
+the facet labels contain the corresponding \textsc{rmse} and \textsc{nlpd} scores.
 A baseline model that does not take into account the input matrices
 achieves an \textsc{rmse} of 0.759.
 The model based on the sliced Wasserstein
-distances between the raw input matrices does not outperform this baseline;
+distances between the raw input matrices does not outperform this \textsc{rmse} baseline;
 the model based on the sliced Wasserstein distances between the scaled
 input matrices fares slightly better with an \textsc{rmse} of 0.697.
 Whitening improves performance more noticeably for the sliced Wasserstein
@@ -999,25 +1015,36 @@ kernel, resulting in an \textsc{rmse} of 0.601.
 \caption{Out-of-fold predictions for 10\% trimmed means of the number of neighbours
 by nine models based on different kernels.
 The facets are sorted left to right, top to bottom, in order of descending
-root mean squared error.
+root mean squared error (\textsc{rmse}).
 The root mean squared error of a baseline model that 
 uses the mean of the in-fold outcomes as the prediction was $0.759$,
 meaning that sliced Wasserstein kernel based on
-the raw input matrices could not beat this baseline.}
+the raw input matrices could not beat this baseline.
+The average negative log predictive density (\textsc{nlpd}) scores are 
+reported as well.}
 \label{fig:brain_trimmed_mean}
 \end{figure}
 
 Kernels based on the Wasserstein distances along the cardinal axes,
 labelled `marginal Wasserstein' in the figure, tend to perform better in
-this example.
+this example in terms of their \textsc{rmse} scores.
 When based on the raw input matrices, performance is modest 
-at an \textsc{rmse} of 0.652.
+at an \textsc{rmse} of 0.654.
 However, whitening using the ZCA-cor, ZCA or Cholesky approach roughly half
 this \textsc{rmse}.
 Wasserstein kernels based on PCA- and PCA-cor-whitened input matrices
 show in-between performance.
 
-Figure \vref{fig:brain_entropy} shows the out-of-fold predictions for 
+The \textsc{nlpd} scores likewise underscore the sensitivity of `marginal Wasserstein'
+models to the whitening procedure: whereas Cholesky whitening results in
+an average \textsc{nlpd} of 0.26, PCA-cor whitening results in an
+average \textsc{nlpd} of 1.64.
+This is worse than the \textsc{nlpd} achieved by
+any of the sliced Wasserstein models
+and represents an improvement only over the `marginal Wasserstein'
+model fitted to the raw input matrices.
+
+Figure \vref{fig:brain_entropy} similarly shows the out-of-fold predictions for 
 entropy outcomes.
 A baseline model that does not take into account the input matrices
 achieves an \textsc{rmse} of 0.165, which neither the sliced nor the `marginal'
@@ -1033,11 +1060,13 @@ still (\textsc{rmse}: 0.126).
 empirical distributions of the number of neighbours
 by nine models based on different kernels.
 The facets are sorted left to right, top to bottom, in order of descending
-root mean squared error.
+root mean squared error (\textsc{rmse}).
 The root mean squared error of a baseline model that 
 uses the mean of the in-fold outcomes as the prediction was $0.165$,
 meaning that both the sliced and marginal Wasserstein kernels based on
-the raw input matrices could not beat this baseline.}
+the raw input matrices could not beat this baseline.
+The average negative log predictive density (\textsc{nlpd}) scores are 
+reported as well.}
 \label{fig:brain_entropy}
 \end{figure}
 
@@ -1045,6 +1074,15 @@ The effects of whitening are more pronounced for the
 `marginal' Wasserstein kernels, with ZCA-cor-whitening
 resulting in \textsc{rmse}s of $0.063$ but the other 
 whitening approaches trailing noticeably.
+
+Again, the sensitivity of the `marginal Wasserstein' models to the whitening procedure
+is evident in the \textsc{nlpd} scores.
+Among these models, ZCA-cor whitening achieves the best \textsc{nlpd}
+by some margin ($-1.28$),
+whereas ZCA whitening results in the comparatively modest \textsc{nlpd} of
+$-0.18$.
+Of note, the sliced Wasserstein model fitted to whitened inputs achieves
+a respectable \textsc{nlpd} ($-0.57$).
 
 \subsection{Conclusions}
 First, the results obtained on this more realistic dataset

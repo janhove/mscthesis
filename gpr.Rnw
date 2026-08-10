@@ -102,6 +102,24 @@ I do not rederive the formulae below myself;
 I merely reproduce them from \citet{Rasmussen2006} with slight changes
 in notation in order to be more consistent with the notation used in this thesis.
 
+\mypar{Definition}
+  A \term{Gaussian process} is an indexed collection of random variables
+  $(f(x))_{x \in \mathcal{X}}$
+  such that 
+  $(f(x_1), \dots, f(x_n))$ has an $n$-variate Gaussian distribution for any $n \geq 1$.
+\parend
+
+A Gaussian process is completely characterised by its mean function 
+$m : \mathcal{X} \to \R, x \mapsto \E(f(x)),$
+and its covariance function 
+$k : \mathcal{X} \times \mathcal{X} \to \R, (x, x') \mapsto \Cov(x, x')$.
+The Gaussian process $f$ defined by the mean function $m$ and the covariance
+function $k$ may be written as
+\[
+  f(\vect x) \sim \mathcal{GP}(m(\vect x), k(\vect x, \vect x')).
+\]
+
+Gaussian processes underpin the Bayesian technique of Gaussian process regression.
 Let $\vect x = (x_i)_{i=1}^{N_1} \subset \mathcal{X}$ be input data for which
 we observe outcomes $y_1, \dots, y_{N_1} \in \R$.
 We assume that 
@@ -109,17 +127,13 @@ We assume that
   y_i = f(x_i) + \varepsilon_i, i = 1, \dots, N_1,
 \]
 with fixed inputs $\vect x$
-and i.i.d.\ random errors $\varepsilon_1, \dots, \varepsilon_{N_1} \sim \mathcal{N}(0, \eta^2), \eta^2 \geq 0$.
-The process $f : \mathcal{X} \to \R$ is modelled as a \term{Gaussian process},
-that is, as an indexed collection of random variables
-$(f(x))_{x \in \mathcal{X}}$
-such that $(f(x_1), \dots, f(x_n))$ has an $n$-variate normal distribution for any $n \geq 1$.
-Treating $f$ as stochastic allows us to do inference on its posterior distribution;
-for present purposes, however, only point predictions are of interest,
-which are obtained as the posterior mean.
-I only consider Gaussian processes with a constant mean $m \in \R$,
-which are fully specified by a covariance function represented by a positive-definite kernel
-$k : \mathcal{X} \times \mathcal{X} \to \R, (x, x') \mapsto \Cov(f(x), f(x'))$.
+and i.i.d.\ random errors 
+$\varepsilon_1, \dots, \varepsilon_{N_1} \sim \mathcal{N}(0, \eta^2), \eta^2 \geq 0$.
+In Gaussian process regression, the error-free function $f : \mathcal{X} \to \R$
+is modelled as a stochastic function whose prior distribution is 
+a Gaussian process.
+Here, I only consider Gaussian processes with a 
+constant mean function $m(\vect x) \equiv m \in \R$.
 
 The data points $(x_i, y_i)_{i=1}^{N_1}$ comprise the training set.
 We are given a further $N_2$ elements of $\mathcal{X}$,
@@ -137,8 +151,9 @@ remain available so that the matrix $\mat K(\vect x, \vect x_*)$
 can be constructed, the test objects $\vect x_*$ do not need to be known at the time
 when the model's hyperparameters are tuned; see Section \ref{sec:tuning}.}
 
-A positive-definite kernel function $k : \mathcal{X} \times \mathcal{X} \to \R$
-expresses the pairwise similarity between elements of $\mathcal{X}$.
+A positive-definite kernel $k : \mathcal{X} \times \mathcal{X} \to \R$
+expresses the pairwise similarity between elements of $\mathcal{X}$
+and serves as the covariance function of the Gaussian process.
 We construct the kernel matrix
 \[
   \mat K := k(x_i, x_j)_{1 \leq i, j \leq N_1 + N_2}
@@ -151,15 +166,15 @@ and define the submatrices
   \mat K(\vect x_*, \vect x_*) &:= (K_{ij})_{N_1 + 1 \leq i, j \leq N_1 + N_2}.
 \end{align*}
 
-In Gaussian process regression, the joint distribution of 
-$\vect y$ and $\vect f_*$ is modelled as a multivariate normal distribution with covariance matrix
+The joint distribution of 
+$\vect y$ and $\vect f_*$ is modelled as a multivariate Gaussian distribution with covariance matrix
 \[
   \begin{pmatrix}
     \mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1} & \mat K(\vect x, \vect x_*) \\
     \mat K(\vect x_*, \vect x) & \mat K(\vect x_*, \vect x_*)
   \end{pmatrix}.
 \]
-The mean of this multivariate normal distribution is assumed to be zero.
+By assumption, the mean of this multivariate Gaussian distribution is zero.
 If the outcome data do not have a natural zero, it is standard practice
 to force this assumption by centring the outcomes around some $m \in \R$,
 with $m = \overline y$ being a common choice.
@@ -179,7 +194,7 @@ In the formulae below, I made this centring step explicit:
 \]
 
 Having observed $\vect x, \bm y$ and $\vect x_*$,
-we can obtain the distribution of 
+we can obtain the posterior distribution of 
 $\vect f_* - m \ones_{N_2}$, which is multivariate normal, too:
 \[
   (\vect f_* - m \ones_{N_2}) | \vect x , \vect y, \vect x_* \sim \mathcal{N}_{N_2}(\overline{\vect f}_*, \Cov(\vect f_*)),
@@ -193,9 +208,10 @@ and
 \[
   \Cov(\vect f_*) = \mat K(\vect x_*, \vect x_*) - \mat K(\vect x_*, \vect x)(\mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1})^{-1}\mat K(\vect x, \vect x_*).
 \]
-Equation \ref{eq:gpr_predictions} yields the model's point predictions;
-the diagonal elements of $\Cov(\vect f_*)$ can be used to 
-construct credible intervals around these predictions.
+Equation \ref{eq:gpr_predictions} yields the model's (maximum a posteriori) 
+point predictions;
+the diagonal elements of $\Cov(\vect f_*)$ can be used to construct credible 
+intervals around these predictions.
 
 \citet[][Algorithm 2.1]{Rasmussen2006} provide an algorithm for efficiently
 estimating $\vect f_*$.

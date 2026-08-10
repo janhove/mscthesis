@@ -59,10 +59,10 @@ multivariate node embeddings.
 They then express the degree of dissimilarity between these input
 graphs using a metric on the space of (square-integrable) probability distributions,
 namely the sliced Wasserstein distance.
-This distance is subsequently put through a kernel function
+This distance is subsequently put through a kernel
 and fed to a Gaussian process regression model,
 allowing predictions for test data to be generated.
-(The terms `sliced Wasserstein distance', `kernel function' and `Gaussian process regression'
+(The terms `sliced Wasserstein distance', `kernel' and `Gaussian process regression'
 will be defined precisely in the next chapters.)
 
 Motivated by Carpintero Perez et al.'s approach, 

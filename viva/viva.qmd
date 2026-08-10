@@ -1,0 +1,108 @@
+---
+title: "Kernel-based regression for distribution-valued inputs via sliced Wasserstein distances"
+subtitle: "Basic properties and behaviour under affine transformations"
+author: "Jan Vanhove"
+date: today
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    chalkboard: false
+    transition: none
+    code-fold: false
+    fig-align: center
+    css: styles.css
+    toc: false
+    incremental: false
+---
+
+## Motivation and goal
+
+::: {.hidden}
+$$
+  \newcommand{\df}{\textrm{d}}      
+  \newcommand{\E}{\mathbb{E}}
+  \newcommand{\N}{\mathbb{N}}
+  \newcommand{\Prob}{\mathbb{P}}
+  \newcommand{\Var}{\textrm{Var}}
+  \newcommand{\Cov}{\textrm{Cov}}
+  \newcommand{\R}{\mathbb{R}}
+  \newcommand{\Sphere}{\mathbb{S}}   
+  \newcommand{\SW}{\textbf{SW}}     
+  \newcommand{\W}{\textbf{W}}        
+  \newcommand{\T}{^{\top}}
+  \newcommand{\invT}{^{-\top}}
+  \newcommand{\simiid}{\overset{\textrm{i.i.d.}}{\sim}}
+  \newcommand{\eqd}{\overset{d}{=}}
+  \newcommand{\vect}[1]{\boldsymbol{#1}}
+  \newcommand{\mat}[1]{\boldsymbol{#1}}
+  \newcommand{\set}[1]{\mathcal{#1}}
+  \newcommand{\ones}{\boldsymbol{1}}
+$$
+:::
+
+Typical setting: regression with vector-valued inputs.
+
+Some important data types aren't vector-valued,
+e.g., graphs (networks, syntax trees, molecules),
+matrices (term-document matrices, characteristics of members of population),
+probability distributions.
+
+Focus on probability distributions (matrices can be interpreted in this way,
+graphs can be embedded in this space).
+Direct motivation: Carpintero Perez et al. (2024) use of so-called sliced
+Wasserstein distances to solve regression problem on graphs. Won't use graphs here, though.
+
+## Kernel-based regression: Gausian process regression
+
+Logic of GPR, briefly. Main point: need a positive-definite kernel function.
+
+$$
+  \begin{bmatrix}
+    \vect y \\
+    \vect f_*
+  \end{bmatrix}
+  \sim
+  \mathcal{N}_{N_1 + N_2}\left(\vect 0, 
+    \begin{bmatrix}
+      \mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1} & \mat K(\vect x, \vect x_*) \\
+      \mat K(\vect x_*, \vect x) & \mat K(\vect x_*, \vect x_*)
+    \end{bmatrix}
+    \right).
+$$
+
+By conditioning on $\vect y$, 
+we may obtain predictions for $\vect f_*$ as long as
+the matrix $\mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1}$ is positive-definite.
+This is the case for all $\eta^2 > 0$ iff 
+$\mat K(\vect x, \vect x)$ is positive semi-definite.
+
+## Radial positive-definite kernels
+On Hilbert space $\set H$, 
+$k(x, x') = \rho(d(x, x'))$ is a radial positive-definite kernel
+in (among others) the following cases:
+
+* Power exponential, in particular the Gaussian radial basis function.
+* The class of Matérn covariance functions.
+
+Will focus on Gaussian RBF.
+
+If objects don't live in a Hilbert space, these kernels can nonetheless be used
+if $d$ is a Hilbertian distance, i.e., can write $d(x, x')$
+as $\|\phi(x) - \phi(x')\|_{\mathcal{H}}$ for an embedding $\phi : \mathcal{X} \to \mathcal{H}$.
+
+## Wasserstein distances
+Definition. 
+
+Basic properties without proof: translation-invariant, homogeneity, upper bound, continuity.
+
+Advantage: is distance, so can use distane based procedures (e.g., $k$-nearest neighbours).
+
+Disadvantages: $\mathcal{O}(n^3 \log n)$, not Hilbertian.
+
+## Sliced Wasserstein distances
+On $\R^d$, Wasserstein distances are easily computed ($\mathcal{O}(n \log n))$
+and have a closed form:
+\[
+  \W_p^p(\mu, \nu) = \int_0^1 |F_\mu^{-1}(t) - F_\nu^{-1}(t)|^p \df t.
+\]

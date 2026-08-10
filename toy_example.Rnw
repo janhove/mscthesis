@@ -22,23 +22,27 @@ where
   ~~~ \vect \mu_4 = -\vect \mu_2.
 \]
 For each $\omega \in \R$, we further define
-\[
-  P(a, \omega) := \mathcal{L}(\mat R(\omega)\vect X),
-\]
-where 
+$P(a, \omega)$ as the pushforward measure of $P(a)$ under a
+counterclockwise rotation by the angle $\omega$;
+% \[
+%   P(a, \omega) := \mathcal{L}(\mat R(\omega)\vect X),
+% \]
+% where 
+
+% and $\vect X \sim P(a)$.
+% That is, $P(a, \omega)$ takes the Gaussian mixture $P(a)$
+% and rotates it counterclockwise by an angle of $\omega$;
+see Figure \vref{fig:toyexample}.
+Denote by 
 \[
   \mat R(\omega) = \begin{pmatrix}\cos \omega & - \sin \omega \\ \sin \omega & \cos \omega\end{pmatrix}
 \]
-and $\vect X \sim P(a)$.
-That is, $P(a, \omega)$ takes the Gaussian mixture $P(a)$
-and rotates it counterclockwise by an angle of $\omega$;
-see Figure \vref{fig:toyexample}.
+the corresponding rotation matrix.
 For $\vect Z \sim \mathcal{N}_2(\vect \mu_i, \mat I_2)$,
 the random vector $\mat R(\pi/2) \vect Z$ has the distribution
 $\mathcal{N}_2(\vect \mu_{i + 1 \mod 4}, \mat I_2), i = 1, \dots, 4$.
 The angle $\pi/2$ is the smallest positive angle for which this is true.
 As a result, the period of $\omega \mapsto P(a, \omega)$ is $\pi/2$.
-
 
 <<echo=FALSE, fig.align = "center", fig.height = 3.5, out.width = "\\textwidth", fig.cap = "For this toy example, the data are generated from Gaussian mixture distributions whose components are laid out symmetrically around the origin. The $a$ parameter (here $a = 5$) governs the distance of the component centroids from the origin; the $\\omega$ parameter ($\\omega = \\pi/3$ in the right panel) determines the rotation applied to the unrotated mixture $P(a, 0)$. The ellipses represent 95\\% probability contours of each mixture component, the centroids of which are marked by crosses.\\label{fig:toyexample}", message = FALSE, warning = FALSE>>=
 library(ellipse)
@@ -236,6 +240,36 @@ Higher $R^2$ values correspond to greater predictive accuracy.
 This definition allows $R^2$ to be negative when the predictions
 are worse than when simply using the training set mean.
 
+The RMSE and $R^2$ metrics compare the test outcomes to point predictions.\label{nlpd}
+Gaussian process regression models, however, do not only output point predictions
+but full posterior predictive distributions as well.
+To evaluate the quality of these posterior predictive distributions to the test data,
+I computed the normalised negative log predictive density (\textsc{nlpd})
+of the test outcomes under these posterior distributions.
+Specifically, writing 
+\[
+  \vect{\omega_*} = (\omega_{N_1 + 1}, \dots, \omega_{N_1 + N_2})\T
+\]
+for the vector of test outcomes,
+\[
+  \vect{\widehat \omega_*} = (\widehat \omega_{N_1 + 1}, \dots, \widehat \omega_{N_1 + N_2})\T
+\]
+for the vector of posterior mean predictions,
+\[
+  \Cov(\vect{\omega_*})
+\]
+for the posterior covariance matrix of the latent (error-free) test outcomes,
+and $\eta^2$ for the tuned noise variance hyperparameter,
+the \textsc{nlpd} score is obtained as
+\[
+  \textsc{nlpd} := -\frac{1}{N_2} \log(p(\vect{\omega_*} | \vect{\widehat \omega_*}, \Cov(\vect{\omega_*}) + \eta^2I_{N_2})),
+\]
+where $p(\cdot | \vect \mu, \mat \Sigma)$ is the density function
+of the multivariate Gaussian distribution with mean vector $\vect \mu$ 
+and covariance matrix $\mat \Sigma$.
+Smaller \textsc{nlpd} values indicate that the posterior predictive distribution
+better captures the joint distribution of the test outcomes.
+
 \paragraph{Baselines.} 
 A reference baseline is established by setting 
 $\widehat \omega_i$ to $\overline \omega = N_1^{-1}\sum_{j=1}^{N_1} \omega_j$,
@@ -312,6 +346,9 @@ distribution over the interval $(0, \pi/4)$.
 As expected, the three Wasserstein kernels substantially outperform both the naïve
 baseline and the random forest baseline.
 However, they are themselves outperformed by the sliced Wasserstein kernel.
+The \textsc{nlpd} values, where available, show a similar pattern,
+with the sliced Wasserstein kernel substantially outperforming the Wasserstein
+kernels based only on marginal distributions.
 This suggests that the sliced Wasserstein kernel picks up on, and is able to leverage,
 discriminatory information that is not contained in the input distributions' marginals.
 
@@ -323,23 +360,26 @@ for the twenty runs of the toy example in the first scenario (rotation angle dra
 \label{fig:results_toyexample1}
 \end{figure}
 
-\begin{table}[]
+\begin{table}
 \centering
-\caption{The root mean squared error obtained by different prediction models over twenty runs of the toy example in the first scenario (rotation angle drawn from $\textrm{Uniform}(0, \pi/4)$).}
+\caption{The root mean squared error and, where applicable, the normalised negative
+log predictive density, obtained by different prediction models over twenty runs
+of the toy example in the first scenario (rotation angle drawn from $\textrm{Uniform}(0, \pi/4)$).}
 \label{tab:results_toyexample1}
-\begin{tabular}{l r r}
-\toprule
-Method of analysis
-& \multicolumn{1}{r}{Mean}
-& \multicolumn{1}{r}{Standard deviation} \\
-\midrule
-Baseline: Training set mean           & 0.221 & 0.017 \\
-Baseline: Random forest               & 0.214 & 0.018 \\
-Wasserstein kernel: first dimension   & 0.048 & 0.008 \\
-Wasserstein kernel: second dimension  & 0.049 & 0.007 \\
-Sum of Wasserstein kernels            & 0.044 & 0.007 \\
-Sliced Wasserstein kernel             & 0.033 & 0.007 \\
-\bottomrule
+\begin{tabular}{l rr rr}
+  \toprule
+  & \multicolumn{2}{c}{\textsc{rmse}}
+  & \multicolumn{2}{c}{\textsc{nlpd}} \\
+  \cmidrule(lr){2-3}
+  \cmidrule(lr){4-5} Method of analysis & Mean  & \textsc{sd} & Mean  & \textsc{sd} \\
+  \midrule
+  Baseline: Training set mean           & 0.221 & 0.017 & --- & --- \\
+  Baseline: Random forest               & 0.214 & 0.018 & --- & --- \\
+  Wasserstein kernel: first dimension   & 0.048 & 0.008 & $-1.65$ & 0.18 \\
+  Wasserstein kernel: second dimension  & 0.049 & 0.007 & $-1.65$ & 0.10 \\
+  Sum of Wasserstein kernels            & 0.044 & 0.007 & $-1.78$ & 0.16 \\
+  Sliced Wasserstein kernel             & 0.033 & 0.007 & $-2.21$ & 0.09 \\
+  \bottomrule
 \end{tabular}
 \end{table}
 
@@ -351,7 +391,8 @@ see  Table \ref{tab:results_toyexample2} and Figure \ref{fig:results_toyexample2
 Indeed, the three Wasserstein kernels do not outperform the baselines.
 The sliced Wasserstein kernel, by contrast, 
 is clearly able to pick up on some signal in the input distributions that is
-not restricted to the marginals.
+not restricted to the marginals, in terms of both the \textsc{rmse}
+and the \textsc{nlpd} values.
 
 \begin{figure}
 \centering
@@ -361,23 +402,26 @@ for the twenty runs of the toy example in the second scenario (rotation angles d
 \label{fig:results_toyexample2}
 \end{figure}
 
-\begin{table}[]
+\begin{table}
 \centering
-\caption{The root mean squared error obtained by different prediction models over twenty runs of the toy example in the second scenario (rotation angles drawn from $\textrm{Uniform}(0, \pi/2)$).}
+\caption{The root mean squared error and, where applicable, the normalised negative
+log predictive density, obtained by different prediction models over twenty runs
+of the toy example in the second scenario (rotation angle drawn from $\textrm{Uniform}(0, \pi/2)$).}
 \label{tab:results_toyexample2}
-\begin{tabular}{l r r}
-\toprule
-Method of analysis
-& \multicolumn{1}{r}{Mean}
-& \multicolumn{1}{r}{Standard deviation} \\
-\midrule
-Baseline: Training set mean           & 0.451 & 0.032 \\
-Baseline: Random forest               & 0.455 & 0.045 \\
-Wasserstein kernel: first dimension   & 0.463 & 0.037 \\
-Wasserstein kernel: second dimension  & 0.451 & 0.033 \\
-Sum of Wasserstein kernels            & 0.463 & 0.037 \\
-Sliced Wasserstein kernel             & 0.229 & 0.041 \\
-\bottomrule
+\begin{tabular}{l rr rr}
+  \toprule
+  & \multicolumn{2}{c}{\textsc{rmse}}
+  & \multicolumn{2}{c}{\textsc{nlpd}} \\
+  \cmidrule(lr){2-3}
+  \cmidrule(lr){4-5} Method of analysis & Mean  & \textsc{sd} & Mean  & \textsc{sd} \\
+  \midrule
+  Baseline: Training set mean           & 0.451 & 0.032       & ---   & ---   \\
+  Baseline: Random forest               & 0.455 & 0.045       & ---   & ---   \\
+  Wasserstein kernel: first dimension   & 0.463 & 0.037       & 0.68  & 0.11  \\
+  Wasserstein kernel: second dimension  & 0.451 & 0.033       & 0.63  & 0.08  \\
+  Sum of Wasserstein kernels            & 0.463 & 0.037       & 0.67  & 0.11  \\
+  Sliced Wasserstein kernel             & 0.229 & 0.041       & $-0.03$ & 0.26\\
+  \bottomrule
 \end{tabular}
 \end{table}
 

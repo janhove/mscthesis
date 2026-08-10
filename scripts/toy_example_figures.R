@@ -2,7 +2,7 @@
 # Toy example: Identical marginal distributions and correlations,
 # but different distributions: Figures
 # 
-# last change: 2026-05-08
+# last change: 2026-08-10
 #-------------------------------------------------------------------------------
 
 # Packages and custom functions ------------------------------------------------
@@ -135,6 +135,37 @@ ggsave(here("figures", "toy_exampleR2.pdf"), width = 6, height = 5,
 r2_results |>
   group_by(method, scenario) |>
   summarise(mean(R2), sd(R2))
+
+# Summarise findings in terms of NLPD ------------------------------------------
+nlpd_matrix_45 <- matrix(nrow = 20, ncol = 4)
+for (i in seq_len(20)) {
+  y_test <- results45 |> 
+    filter(run == i, method == "training set mean") |> 
+    pull(true)
+  for (j in seq_len(4)) {
+    nlpd_matrix_45[i, j] <- nlpd_gpr(
+      models45[[j]][[i]], y_test
+    )
+  }
+}
+colnames(nlpd_matrix_45) <- c("first axis", "second axis", "sliced", "both axes")
+apply(nlpd_matrix_45, 2, mean)
+apply(nlpd_matrix_45, 2, sd)
+
+nlpd_matrix_90 <- matrix(nrow = 20, ncol = 4)
+for (i in seq_len(20)) {
+  y_test <- results90 |> 
+    filter(run == i, method == "training set mean") |> 
+    pull(true)
+  for (j in seq_len(4)) {
+    nlpd_matrix_90[i, j] <- nlpd_gpr(
+      models90[[j]][[i]], y_test
+    )
+  }
+}
+colnames(nlpd_matrix_90) <- c("first axis", "second axis", "sliced", "both axes")
+apply(nlpd_matrix_90, 2, mean)
+apply(nlpd_matrix_90, 2, sd)
 
 # END --------------------------------------------------------------------------
 ################################################################################

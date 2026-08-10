@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------
 # Analysis of brain data
 # 
-# last change: 2026-05-14
+# last change: 2026-08-10
 #-------------------------------------------------------------------------------
 
 # Random seed ------------------------------------------------------------------
@@ -238,36 +238,58 @@ loocv_marginal_dists_scaled <- here("results", "brains", "scaled_margins.Rda") |
 
 outcomes <- sapply(output_distributions, mean, trim = 0.1)
 predictions <- matrix(NA, nrow = 20, ncol = 11)
+nlpds <- matrix(NA, nrow = 20, ncol = 10)
 pb <- txtProgressBar(0, 20, style = 3)
 for (i in seq_along(input_distributions)) {
   training_idx <- seq_along(input_distributions)[-i]
   outcome_train <- outcomes[training_idx]
   outcome_test <- outcomes[i]
   
-  predictions[i, 1] <- fit_gpr(sw_dist, training_idx, i, 
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 2] <- fit_gpr(marginal_dist, training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 3] <- fit_gpr(loocv_sw_dists_scaled[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 4] <- fit_gpr(loocv_sw_dists_whitened[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 5] <- fit_gpr(loocv_marginal_dists_zca[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 6] <- fit_gpr(loocv_marginal_dists_zca_cor[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 7] <- fit_gpr(loocv_marginal_dists_pca[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 8] <- fit_gpr(loocv_marginal_dists_pca_cor[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 9] <- fit_gpr(loocv_marginal_dists_cholesky[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 10] <- mean(outcome_train)
-  predictions[i, 11] <- fit_gpr(loocv_marginal_dists_scaled[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  fit1 <- fit_gpr(sw_dist, training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit2 <- fit_gpr(marginal_dist, training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit3 <- fit_gpr(loocv_sw_dists_scaled[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit4 <- fit_gpr(loocv_sw_dists_whitened[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit5 <- fit_gpr(loocv_marginal_dists_zca[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit6 <- fit_gpr(loocv_marginal_dists_zca_cor[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit7 <- fit_gpr(loocv_marginal_dists_pca[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50) 
+  fit8 <- fit_gpr(loocv_marginal_dists_pca_cor[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit9 <- fit_gpr(loocv_marginal_dists_cholesky[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit10<- mean(outcome_train)
+  fit11<- fit_gpr(loocv_marginal_dists_scaled[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  
+  predictions[i, 1] <- fit1$test_predictions
+  predictions[i, 2] <- fit2$test_predictions
+  predictions[i, 3] <- fit3$test_predictions
+  predictions[i, 4] <- fit4$test_predictions
+  predictions[i, 5] <- fit5$test_predictions
+  predictions[i, 6] <- fit6$test_predictions
+  predictions[i, 7] <- fit7$test_predictions
+  predictions[i, 8] <- fit8$test_predictions
+  predictions[i, 9] <- fit9$test_predictions
+  predictions[i, 10] <- fit10
+  predictions[i, 11] <- fit11$test_predictions
+  
+  nlpds[i, 1] <- nlpd_gpr(fit1, outcome_test)
+  nlpds[i, 2] <- nlpd_gpr(fit2, outcome_test)
+  nlpds[i, 3] <- nlpd_gpr(fit3, outcome_test)
+  nlpds[i, 4] <- nlpd_gpr(fit4, outcome_test)
+  nlpds[i, 5] <- nlpd_gpr(fit5, outcome_test)
+  nlpds[i, 6] <- nlpd_gpr(fit6, outcome_test)
+  nlpds[i, 7] <- nlpd_gpr(fit7, outcome_test)
+  nlpds[i, 8] <- nlpd_gpr(fit8, outcome_test)
+  nlpds[i, 9] <- nlpd_gpr(fit9, outcome_test)
+  nlpds[i, 10] <- nlpd_gpr(fit11, outcome_test)
   setTxtProgressBar(pb, i)
 }
 cat("\n")
+
+colnames(nlpds) <- c("sliced Wasserstein: raw", "marginal Wasserstein: raw",
+                     "sliced Wasserstein: scaled", "sliced Wasserstein: whitened",
+                     "marginal Wasserstein: ZCA-whitened", "marginal Wasserstein: ZCA-cor-whitened",
+                     "marginal Wasserstein: PCA-whitened", "marginal Wasserstein: PCA-cor-whitened",
+                     "marginal Wasserstein: Cholesky-whitened", "marginal Wasserstein: scaled")
+apply(nlpds, 2, mean)
+apply(nlpds, 2, sd)
 
 df_predictions <- cbind(outcomes, predictions) |> 
   as.data.frame()
@@ -280,6 +302,10 @@ colnames(df_predictions) <- c("outcome", "sliced Wasserstein: raw", "marginal Wa
 df_predictions <- df_predictions |> 
   pivot_longer(cols = -outcome,
                names_to = "Method", values_to = "Prediction")
+df_nlpd <- data.frame(
+  Method = colnames(nlpds),
+  NLPD = apply(nlpds, 2, mean)
+)
 rmses <- df_predictions |> 
   group_by(Method) |> 
   summarise(RMSE = sqrt(mean((outcome - Prediction)^2)) |> round(3))
@@ -288,7 +314,8 @@ df_predictions <- df_predictions |>
   filter(Method != "marginal Wasserstein: scaled") |> 
   filter(Method != "baseline (training mean imputation)") |> 
   left_join(rmses) |> 
-  mutate(Method = paste0(Method, "\n(RMSE: ", RMSE, ")"))
+  left_join(df_nlpd) |> 
+  mutate(Method = paste0(Method, "\nRMSE: ", RMSE, "\nNLPD: ", round(NLPD, 2)))
 df_predictions |> 
   ggplot(aes(x = outcome, y = Prediction)) +
   geom_point(shape = 1) + 
@@ -297,7 +324,8 @@ df_predictions |>
   ylab("out-of-fold prediction") +
   theme_bw() +
   theme(axis.text = element_text(colour = "black"))
-ggsave(here("figures", "brain_trimmed_mean.pdf"), width = 1.3*6.3, height = 1.3*4.7)
+ggsave(here("figures", "brain_trimmed_mean.pdf"), width = 1.3*6.3, height = 1.5*4.7)
+
 
 entropy <- function(x) {
   counts <- table(x)
@@ -312,30 +340,51 @@ for (i in seq_along(input_distributions)) {
   outcome_train <- outcomes[training_idx]
   outcome_test <- outcomes[i]
   
-  predictions[i, 1] <- fit_gpr(sw_dist, training_idx, i, 
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 2] <- fit_gpr(marginal_dist, training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 3] <- fit_gpr(loocv_sw_dists_scaled[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 4] <- fit_gpr(loocv_sw_dists_whitened[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 5] <- fit_gpr(loocv_marginal_dists_zca[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 6] <- fit_gpr(loocv_marginal_dists_zca_cor[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 7] <- fit_gpr(loocv_marginal_dists_pca[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 8] <- fit_gpr(loocv_marginal_dists_pca_cor[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 9] <- fit_gpr(loocv_marginal_dists_cholesky[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
-  predictions[i, 10] <- mean(outcome_train)
-  predictions[i, 11] <- fit_gpr(loocv_marginal_dists_scaled[[i]], training_idx, i,
-    outcome_train, outcome_test, verbose = FALSE, runs = 50)$test_predictions
+  fit1 <- fit_gpr(sw_dist, training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit2 <- fit_gpr(marginal_dist, training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit3 <- fit_gpr(loocv_sw_dists_scaled[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit4 <- fit_gpr(loocv_sw_dists_whitened[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit5 <- fit_gpr(loocv_marginal_dists_zca[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit6 <- fit_gpr(loocv_marginal_dists_zca_cor[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit7 <- fit_gpr(loocv_marginal_dists_pca[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50) 
+  fit8 <- fit_gpr(loocv_marginal_dists_pca_cor[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit9 <- fit_gpr(loocv_marginal_dists_cholesky[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  fit10<- mean(outcome_train)
+  fit11<- fit_gpr(loocv_marginal_dists_scaled[[i]], training_idx, i, outcome_train, outcome_test, verbose = FALSE, runs = 50)
+  
+  predictions[i, 1] <- fit1$test_predictions
+  predictions[i, 2] <- fit2$test_predictions
+  predictions[i, 3] <- fit3$test_predictions
+  predictions[i, 4] <- fit4$test_predictions
+  predictions[i, 5] <- fit5$test_predictions
+  predictions[i, 6] <- fit6$test_predictions
+  predictions[i, 7] <- fit7$test_predictions
+  predictions[i, 8] <- fit8$test_predictions
+  predictions[i, 9] <- fit9$test_predictions
+  predictions[i, 10] <- fit10
+  predictions[i, 11] <- fit11$test_predictions
+  
+  nlpds[i, 1] <- nlpd_gpr(fit1, outcome_test)
+  nlpds[i, 2] <- nlpd_gpr(fit2, outcome_test)
+  nlpds[i, 3] <- nlpd_gpr(fit3, outcome_test)
+  nlpds[i, 4] <- nlpd_gpr(fit4, outcome_test)
+  nlpds[i, 5] <- nlpd_gpr(fit5, outcome_test)
+  nlpds[i, 6] <- nlpd_gpr(fit6, outcome_test)
+  nlpds[i, 7] <- nlpd_gpr(fit7, outcome_test)
+  nlpds[i, 8] <- nlpd_gpr(fit8, outcome_test)
+  nlpds[i, 9] <- nlpd_gpr(fit9, outcome_test)
+  nlpds[i, 10] <- nlpd_gpr(fit11, outcome_test)
   setTxtProgressBar(pb, i)
 }
 cat("\n")
+
+colnames(nlpds) <- c("sliced Wasserstein: raw", "marginal Wasserstein: raw",
+                     "sliced Wasserstein: scaled", "sliced Wasserstein: whitened",
+                     "marginal Wasserstein: ZCA-whitened", "marginal Wasserstein: ZCA-cor-whitened",
+                     "marginal Wasserstein: PCA-whitened", "marginal Wasserstein: PCA-cor-whitened",
+                     "marginal Wasserstein: Cholesky-whitened", "marginal Wasserstein: scaled")
+apply(nlpds, 2, mean)
+apply(nlpds, 2, sd)
 
 df_predictions <- cbind(outcomes, predictions) |> 
   as.data.frame()
@@ -348,6 +397,10 @@ colnames(df_predictions) <- c("outcome", "sliced Wasserstein: raw", "marginal Wa
 df_predictions <- df_predictions |> 
   pivot_longer(cols = -outcome,
                names_to = "Method", values_to = "Prediction")
+df_nlpd <- data.frame(
+  Method = colnames(nlpds),
+  NLPD = apply(nlpds, 2, mean)
+)
 rmses <- df_predictions |> 
   group_by(Method) |> 
   summarise(RMSE = sqrt(mean((outcome - Prediction)^2)) |> round(3))
@@ -356,7 +409,8 @@ df_predictions <- df_predictions |>
   filter(Method != "marginal Wasserstein: scaled") |> 
   filter(Method != "baseline (training mean imputation)") |> 
   left_join(rmses) |> 
-  mutate(Method = paste0(Method, "\n(RMSE: ", RMSE, ")"))
+  left_join(df_nlpd) |> 
+  mutate(Method = paste0(Method, "\nRMSE: ", RMSE, "\nNLPD: ", round(NLPD, 2)))
 df_predictions |> 
   ggplot(aes(x = outcome, y = Prediction)) +
   geom_point(shape = 1) + 
@@ -365,7 +419,8 @@ df_predictions |>
   ylab("out-of-fold prediction") +
   theme_bw() +
   theme(axis.text = element_text(colour = "black"))
-ggsave(here("figures", "brain_entropy.pdf"), width = 1.3*6.3, height = 1.3*4.7)
+ggsave(here("figures", "brain_entropy.pdf"), width = 1.3*6.3, height = 1.5*4.7)
+
 
 # Session info -----------------------------------------------------------------
 devtools::session_info("attached")

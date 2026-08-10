@@ -168,8 +168,9 @@ to degenerate kernel matrices, but that hyperparameter tuning can offset
 this degeneracy.
 Simulations and a real-data example corroborate these findings
 and further suggest that kernels based on Wasserstein distances along the 
-cardinal axes can match or even outperform sliced Wasserstein distances, provided
-that the predictive signal is approximately axis-aligned.
+cardinal axes can match or even outperform sliced Wasserstein distances, 
+when the relevant differences among the input distributions are 
+approximately aligned with the coordinate axes.
 
 \chapter*{Acknowledgements}
 Je remercie mon directeur de thèse, David Ginsbourger,
