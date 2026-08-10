@@ -69,34 +69,39 @@ The chapter ends with a real-data example that demonstrates the effects of
 global scaling and whitening in a less artificial setting.
 
 \section{Theoretical considerations}
-Let $P, Q \in \mathcal{P}_2(\R^d), d \geq 1,$ and let $\vect X \sim P, \vect Y \sim Q$.
+For $p \in [1, \infty)$,
+let $P, Q \in \mathcal{P}_p(\R^d), d \geq 1,$ and let $\vect X \sim P, \vect Y \sim Q$.
 Further let $\mat A \in \textrm{GL}_d(\R)$ be an invertible matrix and $\vect b \in \R^{d}$ a translation vector.
 For $\vect \theta \in \R^d$, we have
 \[
   \langle \mat A \vect X + \vect b, \vect \theta \rangle = \langle \vect X, \mat A\T \vect \theta \rangle + \langle \vect b, \vect \theta \rangle.
 \]
 Consequently,
-the squared sliced Wasserstein distance of order 2 between the distributions of $\mat A \vect X + \vect b$ and $\mat A\vect Y + \vect b$ is
+% the squared sliced Wasserstein distance of order 2 between the distributions of $\mat A \vect X + \vect b$ and $\mat A\vect Y + \vect b$ is
 \begin{align*}
-  \SW_2^2(\mat A\vect X + \vect b, \mat A\vect Y + \vect b)
-  &= \int \W_2^2(\langle \mat A\vect X + \vect b, \theta \rangle, \langle \mat A \vect Y + \vect b, \theta \rangle) \df \sigma(\theta) \\
-  &= \int \W_2^2(\langle \vect X, \mat A\T \theta \rangle + \langle \vect b, \theta \rangle, \langle \vect Y, \mat A\T \theta \rangle + \langle \vect b, \theta \rangle) \df \sigma(\theta).
+  \SW_p^p(\mat A\vect X + \vect b, \mat A\vect Y + \vect b)
+  &= \int \W_p^p(\langle \mat A\vect X + \vect b, \theta \rangle, \langle \mat A \vect Y + \vect b, \theta \rangle) \df \sigma(\theta) \\
+  &= \int \W_p^p(\langle \vect X, \mat A\T \theta \rangle + \langle \vect b, \theta \rangle, \langle \vect Y, \mat A\T \theta \rangle + \langle \vect b, \theta \rangle) \df \sigma(\theta).
 \end {align*}
 Since the Wasserstein distance is translation-invariant (see Lemma \vref{lemma:wassersteinproperties}), 
 this simplifies to
 \begin{equation}\label{eq:pushforward}
-   \SW_2^2(\mat A\vect X + \vect b, \mat A\vect Y + \vect b) = \int \W_2^2(\langle \vect X, \mat A\T \theta \rangle, \langle \vect Y, \mat A\T \theta \rangle) \df \sigma(\theta) = \SW_2^2(\mat A\vect X, \mat A\vect Y).
+   \SW_p^p(\mat A\vect X + \vect b, \mat A\vect Y + \vect b) 
+   = \int \W_p^p(\langle \vect X, \mat A\T \theta \rangle, \langle \vect Y, \mat A\T \theta \rangle) \df \sigma(\theta) 
+   = \SW_p^p(\mat A\vect X, \mat A\vect Y).
 \end{equation}
 
 \mypar[Change of measure]{Remark}
 By definition,
 \[
-  \SW_2^2(\vect X, \vect Y) = \int \W_2^2(\langle \vect X, \theta \rangle, \langle \vect Y, \theta \rangle) \df \sigma(\theta).
+  \SW_p^p(\vect X, \vect Y) 
+  = \int \W_p^p(\langle \vect X, \theta \rangle, \langle \vect Y, \theta \rangle) \df \sigma(\theta).
 \]
 Comparing this expression to Equation \ref{eq:pushforward},
 we observe that
 \[
-  \SW_2^2(\mat A \vect X + \vect b, \mat A \vect Y + \vect b) = \int \W_2^2(\langle \vect X, \theta \rangle, \langle \vect Y, \theta \rangle) \df \sigma_{\mat A}(\theta),
+  \SW_p^p(\mat A \vect X + \vect b, \mat A \vect Y + \vect b) 
+  = \int \W_p^p(\langle \vect X, \theta \rangle, \langle \vect Y, \theta \rangle) \df \sigma_{\mat A}(\theta),
 \]
 with $\sigma_{\mat A}$ the pushforward measure of $\sigma$ under the mapping $\R^d \ni \vect v \mapsto  \mat A\T \vect v \in \R^d$.
 Global affine transformations, then, act on sliced Wasserstein distances solely
@@ -104,39 +109,39 @@ through a distortion of the measure on $\Sphere^{d-1}$.
 \parend
 
 To better characterise this change of measure, we write
-$\SW_2^2(\vect X, \vect Y)$ and $\SW_2^2(\mat A\vect X, \mat A\vect Y)$ as integrals with respect to the Lebesgue measure.
+$\SW_p^p(\vect X, \vect Y)$ and $\SW_p^p(\mat A\vect X, \mat A\vect Y)$ as integrals with respect to the Lebesgue measure.
 For $\vect Z \sim \mathcal{N}_d(\vect 0, \mat I_d)$, 
 we have $\Prob(\|Z\| = 0) = 0$ and 
 it holds that $\vect Z/\|\vect Z\| \sim \textrm{Uniform}(\Sphere^{d-1})$.
 Hence,
 \begin{align*}
- \SW_2^2(\vect X, \vect Y)
- &= \int_{\R^d} \W_2^2(\langle \vect X, z/\|z\| \rangle, \langle \vect Y, z/\|z\| \rangle) \varphi(z) \df z,
+ \SW_p^p(\vect X, \vect Y)
+ &= \int_{\R^d} \W_p^p(\langle \vect X, z/\|z\| \rangle, \langle \vect Y, z/\|z\| \rangle) \varphi(z) \df z,
 \end{align*}
 where $\varphi : \R^d \to (0, \infty), \vect z \mapsto (2\pi)^{-d/2}\exp\left(-\|\vect z\|^2 / 2\right),$
 is the Lebesgue density of the $d$-variate standard normal distribution.
 Similarly, and after using the homogeneity property
 of the Wasserstein distance (Lemma \ref{lemma:wassersteinproperties}), we see that
 \begin{align*}
-  \SW_2^2(\mat A\vect X, \mat A\vect Y)
-  &= \int_{\R^d} \W_2^2(\langle \mat A\vect X, z/\|z\| \rangle, \langle \mat A\vect Y, z/\|z\| \rangle) \varphi(z) \df z \\
-  &= \int_{\R^d} \W_2^2(\langle \vect X, \mat A\T z \rangle, \langle \vect Y, \mat A\T z \rangle) \frac{\varphi(z)}{\|z\|^2} \df z.
+  \SW_p^p(\mat A\vect X, \mat A\vect Y)
+  &= \int_{\R^d} \W_p^p(\langle \mat A\vect X, z/\|z\| \rangle, \langle \mat A\vect Y, z/\|z\| \rangle) \varphi(z) \df z \\
+  &= \int_{\R^d} \W_p^p(\langle \vect X, \mat A\T z \rangle, \langle \vect Y, \mat A\T z \rangle) \frac{\varphi(z)}{\|z\|^p} \df z.
 \end{align*}
 Via a change of variable $\tilde{\vect z} = \mat A\T \vect z$ and after renaming and using the homogeneity property once more, 
 we obtain
 \begin{align*}
-  \SW_2^2(\mat A\vect X, \mat A\vect Y)
-  &= \int_{\R^d} \W_2^2(\langle \vect X, \tilde z \rangle, \langle \vect Y, \tilde z \rangle) \frac{\varphi(\mat A\invT \tilde z)}{\|\mat A\invT \tilde z\|^2 |\det \mat A|} \df \tilde z \\
-  &= \int_{\R^d} \W_2^2(\langle \mat X, z/\|z\| \rangle, \langle \mat Y, z/\|z\| \rangle) \frac{\|z\|^2}{\|\mat A\invT z\|^2}\frac{\varphi(\mat A\invT  z)}{|\det \mat A|} \df z.
+  \SW_p^p(\mat A\vect X, \mat A\vect Y)
+  &= \int_{\R^d} \W_p^p(\langle \vect X, \tilde z \rangle, \langle \vect Y, \tilde z \rangle) \frac{\varphi(\mat A\invT \tilde z)}{\|\mat A\invT \tilde z\|^p |\det \mat A|} \df \tilde z \\
+  &= \int_{\R^d} \W_p^p(\langle \mat X, z/\|z\| \rangle, \langle \mat Y, z/\|z\| \rangle) \frac{\|z\|^p}{\|\mat A\invT z\|^p}\frac{\varphi(\mat A\invT  z)}{|\det \mat A|} \df z.
 \end{align*}
 
-Hence, computing $\SW_2^2(\mat A\vect X, \mat A \vect Y)$, like computing $\SW_2^2(\vect X, \vect Y)$, amounts to integrating
+Hence, computing $\SW_p^p(\mat A\vect X, \mat A \vect Y)$, like computing $\SW_p^p(\vect X, \vect Y)$, amounts to integrating
 \[
-  \W^2_2(\langle \vect X, z/\|z\| \rangle, \langle \vect Y, z/\|z\| \rangle)
+  \W^p_p(\langle \vect X, z/\|z\| \rangle, \langle \vect Y, z/\|z\| \rangle)
 \]
 over $z$, but with respect to the measure $\mu_{\mat A}$ that has the Lebesgue density
 \[
-  \df \mu_{\mat A}(z) = \frac{\|z\|^2}{\|\mat A\invT z\|^2}\frac{\varphi(\mat A\invT  z)}{|\det \mat A|} \df z
+  \df \mu_{\mat A}(z) = \frac{\|z\|^p}{\|\mat A\invT z\|^p}\frac{\varphi(\mat A\invT  z)}{|\det \mat A|} \df z
 \]
 instead of with respect to the measure $\mu$ that has the Lebesgue density
 \[
@@ -147,8 +152,8 @@ instead of with respect to the measure $\mu$ that has the Lebesgue density
 From the considerations above, we see that the Radon--Nikodym derivative of $\mu_{\mat A}$ with respect to $\mu$ is
 \begin{align*}
   \frac{\df \mu_{\mat A}}{\df \mu}(\vect z)
-  &= \frac{\|\vect z\|^2}{\|\mat A\invT \vect z\|^2}\frac{\varphi(\mat A\invT \vect z)}{|\det \mat A| \varphi(\vect z)} \\
-  &= \frac{\|\vect z\|^2}{\vect z\T (\mat A\T \mat A)^{-1} \vect z} \frac{1}{|\det \mat A|}\exp\left\{\frac{1}{2}\left(\vect z\T \left(\mat I_d - (\mat A\T \mat A)^{-1}\right) \vect z\right)\right\}. \parendeq
+  &= \frac{\|\vect z\|^p}{\|\mat A\invT \vect z\|^p}\frac{\varphi(\mat A\invT \vect z)}{|\det \mat A| \varphi(\vect z)} \\
+  &= \frac{\|\vect z\|^p}{(\vect z\T (\mat A\T \mat A)^{-1} \vect z)^{p/2}} \frac{1}{|\det \mat A|}\exp\left\{\frac{1}{2}\left(\vect z\T \left(\mat I_d - (\mat A\T \mat A)^{-1}\right) \vect z\right)\right\}. \parendeq
 \end{align*}
 
 \mypar[Only $\mat A\T \mat A$ matters]{Remark}
@@ -164,7 +169,7 @@ using a matrix $\mat W$ with $\mat W\T \mat W = \widehat{\mat \Sigma}^{-1}$,
 the precise whitening procedure (e.g., Mahalanobis, PCA, Cholesky)
 does not affect the resulting sliced Wasserstein distances.\footnote{But it \emph{does}
 affect Wasserstein distances of the form 
-$\W_2(\langle \vect X, \vect \theta \rangle, \langle \vect Y, \vect \theta \rangle)$ for $\vect \theta \in \R^d$.
+$\W_p(\langle \vect X, \vect \theta \rangle, \langle \vect Y, \vect \theta \rangle)$ for $\vect \theta \in \R^d$.
 As we will see in the real-data example at the end of this chapter,
 the choice of the whitening procedure can very much affect the 
 performance of the downstream prediction model if Wasserstein kernels are used.}
@@ -182,7 +187,8 @@ and $\mat V_{\textrm{SVD}}\T$ the orientation.
 \parend
 
 \section{Geometrical interpretation}
-Consider the eigenvalue decomposition $\mat A\T \mat A = \mat Q\mat \Lambda \mat Q\T$, where
+Let us consider, for the case $p = 2$,
+the eigenvalue decomposition $\mat A\T \mat A = \mat Q\mat \Lambda \mat Q\T$, where
 $\mat \Lambda = \textrm{diag}(\lambda_1, \dots, \lambda_d)$.
 Then
 \[
