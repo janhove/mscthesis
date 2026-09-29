@@ -197,7 +197,7 @@ Having observed $\vect x, \bm y$ and $\vect x_*$,
 we can obtain the posterior distribution of 
 $\vect f_* - m \ones_{N_2}$, which is multivariate normal, too:
 \[
-  (\vect f_* - m \ones_{N_2}) | \vect x , \vect y, \vect x_* \sim \mathcal{N}_{N_2}(\overline{\vect f}_*, \Cov(\vect f_*)),
+  (\vect f_* - m \ones_{N_2}) | \vect x , \vect y, \vect x_* \sim \mathcal{N}_{N_2}(\overline{\vect f}_*, \Cov(\vect f_* | \vect x, \vect x_*)),
 \]
 where
 \begin{equation}\label{eq:gpr_predictions}
@@ -206,11 +206,11 @@ where
 \end{equation}
 and
 \[
-  \Cov(\vect f_*) = \mat K(\vect x_*, \vect x_*) - \mat K(\vect x_*, \vect x)(\mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1})^{-1}\mat K(\vect x, \vect x_*).
+  \Cov(\vect f_* | \vect x, \vect x_*) = \mat K(\vect x_*, \vect x_*) - \mat K(\vect x_*, \vect x)(\mat K(\vect x, \vect x) + \eta^2 \mat I_{N_1})^{-1}\mat K(\vect x, \vect x_*).
 \]
 Equation \ref{eq:gpr_predictions} yields the model's (maximum a posteriori) 
 point predictions;
-the diagonal elements of $\Cov(\vect f_*)$ can be used to construct credible 
+the diagonal elements of $\Cov(\vect f_* | \vect x, \vect x_*)$ can be used to construct credible 
 intervals around these predictions.
 
 \citet[][Algorithm 2.1]{Rasmussen2006} provide an algorithm for efficiently

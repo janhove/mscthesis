@@ -256,13 +256,13 @@ for the vector of test outcomes,
 \]
 for the vector of posterior mean predictions,
 \[
-  \Cov(\vect{\omega_*})
+  \Cov(\vect{\omega_*} | \widehat P_1, \dots, \widehat P_{N_1+N_2})
 \]
 for the posterior covariance matrix of the latent (error-free) test outcomes,
 and $\eta^2$ for the tuned noise variance hyperparameter,
 the \textsc{nlpd} score is obtained as
 \[
-  \textsc{nlpd} := -\frac{1}{N_2} \log(p(\vect{\omega_*} | \vect{\widehat \omega_*}, \Cov(\vect{\omega_*}) + \eta^2I_{N_2})),
+  \textsc{nlpd} := -\frac{1}{N_2} \log(p(\vect{\omega_*} | \vect{\widehat \omega_*}, \Cov(\vect{\omega_*} | \widehat P_1, \dots, \widehat P_{N_1+N_2}) + \eta^2I_{N_2})),
 \]
 where $p(\cdot | \vect \mu, \mat \Sigma)$ is the density function
 of the multivariate Gaussian distribution with mean vector $\vect \mu$ 

@@ -178,7 +178,7 @@ pour ses suggestions, pour sa générosité avec son temps et son café
 ainsi que pour sa patience.
 Je n'ai probablement pas été l'étudiant le plus facile à diriger.
 Je tiens également à remercier Antoine Faul pour son aide lors d'une
-première tentative à aborder un sujet de thèse.
+première tentative d'aborder un sujet de thèse.
 
 Mein Dank gilt ausserdem den Freundinnen und Freunden,
 die in den vergangenen sechs Jahren dafür gesorgt haben,
@@ -232,7 +232,8 @@ Ze hebben mijn leven meer beïnvloed dan ze zelf voor mogelijk hadden kunnen hou
 \newgeometry{margin=0pt}
 \thispagestyle{empty}
 \noindent
-\includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{erklaerung.pdf}
+% \includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{erklaerung.pdf}
 \restoregeometry
+
 \end{document}
 
